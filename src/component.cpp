@@ -1,17 +1,32 @@
 #include <glm/glm.hpp>
+#include <glm/ext/matrix_transform.hpp>
 
 #include "Component.hpp"
+#include "Window.hpp"
+#include "glm/ext/matrix_clip_space.hpp"
 
-Transform3D initializeTransform3D(vec3 position,vec3 scale,vec3 rotate,float rotateAngle){
-    Transform3D t3D;
-    t3D.rotateAngle = rotateAngle;
-    t3D.position = position;
-    t3D.scale = scale;
-    t3D.rotate = rotate;
-    // glm_vec3_copy(position,t3D.position);
-    // glm_vec3_copy(scale,t3D.scale);
-    // glm_vec3_copy(rotate,t3D.rotate);
-    return t3D;
+Transform3D::Transform3D(vec3 p_position, vec3 p_rotation, vec3 p_scale,float p_rotateAngle)
+:position(p_position),rotate(p_rotation),scale(p_scale),rotateAngle(glm::radians(p_rotateAngle)),M(NULL),transform(NULL){};
+
+UBO* Transform3D::getUBOData() {
+    return &transform;
+}
+
+Uint32 Transform3D::getUBOSize() {
+    return sizeof(transform);
+}
+
+void Transform3D::translate(glm::mat4 projection) {
+
+    // P = glm::perspective(fov,(float)windowWidth/windowHeight,0.1f,1000.0f);
+    M = glm::mat4(1.0f);
+    // translate (glm::translate returns a new matrix)
+    // std::cout << position.x << position.y << position.z << std::endl;
+    M = glm::translate(M, position);
+    // scale
+    M = glm::scale(M, scale);
+    // multiply P * M -> MVP
+    transform.mvp = projection * M;
 }
 
 void Texture::create(const char *p_fileName,Window* window) {
@@ -71,21 +86,21 @@ void Texture::upload(Window* window) {
 }
 
 void Texture::bind(Window* window,int slotNum,int numBinding) {
-    SDL_BindGPUFragmentSamplers(window->renderPass, 0, &textureSamplerBinding, 1);
+    SDL_BindGPUFragmentSamplers(window->renderPass, slotNum, &textureSamplerBinding, numBinding);
 }
 
 void Texture::destroy(Window *window) {
 
     if (textureTransferBuffer) {
         SDL_ReleaseGPUTransferBuffer(window->device, textureTransferBuffer);
-        textureTransferBuffer = NULL;
+        textureTransferBuffer = nullptr;
     }
     if (texture) {
         SDL_ReleaseGPUTexture(window->device, texture);
-        texture = NULL;
+        texture = nullptr;
     }
     if (surface) {
         SDL_DestroySurface(surface); // assuming SDL_Surface*
-        surface = NULL;
+        surface = nullptr;
     }
 }

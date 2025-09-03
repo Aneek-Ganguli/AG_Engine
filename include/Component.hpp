@@ -9,6 +9,13 @@
 using namespace glm;
 
 struct  Transform3D{
+public:
+    Transform3D(vec3 p_position, vec3 p_rotation, vec3 p_scale,float p_rotateAngle);
+    Transform3D():position(NULL),M(NULL),scale(NULL),rotate(NULL),rotateAngle(NULL),transform(NULL){}
+    UBO* getUBOData();
+    Uint32 getUBOSize();
+    void translate(glm::mat4 projection);
+private:
     vec3 position,scale,rotate;
     mat4 M;
     float rotateAngle;
@@ -32,18 +39,6 @@ private:
     SDL_GPUTextureSamplerBinding textureSamplerBinding{};
 };
 
-enum SHAPE{
-    SQUARE,
-    CIRCLE,
-    TRIANGLE,
-    RECTANGLE,
-    CUSTOM
-};
-
-struct ShapeData {
-    SHAPE shape;
-    Transform3D transform;
-};
 
 
 // ok so i want to get the z and calculate thhe maximum x,y and clamp it

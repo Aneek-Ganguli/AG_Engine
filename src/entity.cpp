@@ -73,37 +73,21 @@ Entity::Entity(std::vector<VertexData> p_vertexData, std::vector<Uint32> p_indic
 }
 
 
-// void print_mat4(mat4 m) {
-//     for (int i = 0; i < 4; i++) {
-//         printf("| ");
-//         for (int j = 0; j < 4; j++) {
-//             printf("%8.3f ", m[i][j]);
-//         }
-//         printf("|\n");
-//     }
-//     printf("\n");
-// }
+
 
 void Entity::draw(Window* window) {
-    // glm_mat4_identity(transform.M);
-    transform.M = glm::mat4(1.0f);
-    // translate (glm::translate returns a new matrix)
-    transform.M = glm::translate(transform.M, transform.position);
-    // scale
-    transform.M = glm::scale(transform.M, glm::vec3(3.0f, 1.0f, 1.0f));
-    // multiply P * M -> MVP
-    transform.transform.mvp = window->P * transform.M;
+
+    transform.translate(window->projection);
 
     SDL_BindGPUVertexBuffers(window->renderPass, 0, &vertexBufferBinding, 1);
     SDL_BindGPUIndexBuffer(window->renderPass, &indexBufferBinding, SDL_GPU_INDEXELEMENTSIZE_32BIT);
 
-    SDL_PushGPUVertexUniformData(window->commandBuffer, 0, &transform.transform, sizeof(transform.transform));
+    SDL_PushGPUVertexUniformData(window->commandBuffer, 0, transform.getUBOData(),
+        transform.getUBOSize());
 
-    texture1.bind(window, 2, 0); // → set=2, binding=0
+    texture1.bind(window, 0, 1); // → set=2, binding=0
 
-    if (!window->renderPass) {
-        std::cout << "Error creating renderpass" << SDL_GetError()<< std::endl;
-    }
+
 
     SDL_DrawGPUIndexedPrimitives(window->renderPass, (Uint32)indiciesCount, 1, 0, 0, 0);
 }

@@ -1,3 +1,4 @@
+#include <iostream>
 #include <stdio.h>
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h>
@@ -213,6 +214,17 @@ SDL_GPUBufferBinding createBufferBinding(SDL_GPUBuffer* buffer){
     };
 }
 
+void print_mat4(mat4 m) {
+	for (int i = 0; i < 4; i++) {
+		printf("| ");
+		for (int j = 0; j < 4; j++) {
+			printf("%8.3f ", m[i][j]);
+		}
+		printf("|\n");
+	}
+	printf("\n");
+}
+
 void createGraphicsPipeline(Window* window,float Fov) {
 	SDL_GPUVertexBufferDescription vertexBufferDescription{};
 	vertexBufferDescription.slot = 0;
@@ -272,7 +284,9 @@ void createGraphicsPipeline(Window* window,float Fov) {
     fov = window->fov;
 
     // glm_perspective(fov, (float)window->width/window->height, 0.1f, 1000.0f, window->P);
-	window->P = perspective(fov,(float)window->width/window->height,0.1f,1000.0f);
+	window->projection = perspective(fov,(float)window->width/window->height,0.1f,1000.0f);
+	// print_mat4(window->projection);
+	std::cout << windowWidth << " " << windowHeight << std::endl;
 }
 
 SDL_Surface* loadImage(const char* imageFilename, int desiredChannels){

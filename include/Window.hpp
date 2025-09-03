@@ -13,6 +13,8 @@ static const char* path = NULL;
 
 static float windowHeight,windowWidth,fov;
 
+// static glm::mat4 P;
+
 
 typedef struct Window{
     SDL_Window *window;
@@ -28,7 +30,7 @@ typedef struct Window{
     SDL_GPUSampler* sampler;
     int width,height;
     float fov;
-    glm::mat4 P;
+	glm::mat4 projection;
 } Window;
 
 struct Window createWindow(const char* title,int width,int height);
@@ -58,3 +60,6 @@ SDL_GPUSampler* createGPUSampler(Window* window);
 void uploadTexture(SDL_GPUTextureTransferInfo* textureTransferInfo,SDL_GPUTextureRegion* textureRegion,
 	Window* window);
 void cleanUp(Window* window);
+
+
+void print_mat4(mat4 m);
