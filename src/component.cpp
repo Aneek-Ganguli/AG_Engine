@@ -27,6 +27,7 @@ void Transform3D::translate(glm::mat4 projection) {
     M = glm::scale(M, scale);
     // multiply P * M -> MVP
     transform.mvp = projection * M;
+    // print_mat4(M);
 }
 
 void Texture::create(const char *p_fileName,Window* window) {
@@ -36,7 +37,7 @@ void Texture::create(const char *p_fileName,Window* window) {
         return;
     }
 
-    texture = createTexture(surface, window);
+    texture = window->createTexture(surface);
     if (!texture) {
         printf("Error creating GPU texture: %s\n", SDL_GetError());
         return;
@@ -44,24 +45,24 @@ void Texture::create(const char *p_fileName,Window* window) {
 
     // --- Texture staging + upload info ---
     const Uint32 texBytes = (surface->w * surface->h * 4);
-    textureTransferBuffer = createTransferBuffer(texBytes, window);
+    textureTransferBuffer = window->createTransferBuffer(texBytes);
     if (!textureTransferBuffer) {
         printf("Error creating texture staging buffer: %s\n", SDL_GetError());
         return;
     }
 
-    void *texMem = SDL_MapGPUTransferBuffer(window->device, textureTransferBuffer, false);
+    void *texMem = SDL_MapGPUTransferBuffer(window->getGPUDevice(), textureTransferBuffer, false);
     if (!texMem) {
         printf("Error mapping texture staging buffer: %s\n", SDL_GetError());
         return;
     }
     if (!surface->pixels) {
         printf("Loaded surface has NULL pixels\n");
-        SDL_UnmapGPUTransferBuffer(window->device, textureTransferBuffer);
+        SDL_UnmapGPUTransferBuffer(window->getGPUDevice(), textureTransferBuffer);
         return;
     }
     memcpy(texMem, surface->pixels, texBytes);
-    SDL_UnmapGPUTransferBuffer(window->device, textureTransferBuffer);
+    SDL_UnmapGPUTransferBuffer(window->getGPUDevice(), textureTransferBuffer);
 
     // textureRegion = (SDL_GPUTextureRegion){0};
     textureRegion.texture = texture;
@@ -74,7 +75,7 @@ void Texture::create(const char *p_fileName,Window* window) {
     textureTransferInfo.offset = 0;
 
     textureSamplerBinding.texture = texture;
-    textureSamplerBinding.sampler = window->sampler;
+    textureSamplerBinding.sampler = window->getSampler();
 }
 
 void Texture::upload(Window* window) {
@@ -82,21 +83,21 @@ void Texture::upload(Window* window) {
         std::cerr << "ERROR textureTransferInfo is NULL" << std::endl;
     }
 
-    uploadTexture(&textureTransferInfo, &textureRegion, window);
+    window->uploadTexture(&textureTransferInfo, &textureRegion);
 }
 
 void Texture::bind(Window* window,int slotNum,int numBinding) {
-    SDL_BindGPUFragmentSamplers(window->renderPass, slotNum, &textureSamplerBinding, numBinding);
+    SDL_BindGPUFragmentSamplers(window->getRenderPass(), slotNum, &textureSamplerBinding, numBinding);
 }
 
 void Texture::destroy(Window *window) {
 
     if (textureTransferBuffer) {
-        SDL_ReleaseGPUTransferBuffer(window->device, textureTransferBuffer);
+        SDL_ReleaseGPUTransferBuffer(window->getGPUDevice(), textureTransferBuffer);
         textureTransferBuffer = nullptr;
     }
     if (texture) {
-        SDL_ReleaseGPUTexture(window->device, texture);
+        SDL_ReleaseGPUTexture(window->getGPUDevice(), texture);
         texture = nullptr;
     }
     if (surface) {

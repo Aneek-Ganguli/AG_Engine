@@ -21,53 +21,47 @@ Entity::Entity(std::vector<VertexData> p_vertexData, std::vector<Uint32> p_indic
     indiciesCount  = p_indices.size();
 
     // --- GPU buffers ---
-    vertexBuffer = createBuffer(vertexSize, SDL_GPU_BUFFERUSAGE_VERTEX, window);
-    indexBuffer  = createBuffer(indexSize,  SDL_GPU_BUFFERUSAGE_INDEX,  window);
+    vertexBuffer = window->createBuffer(vertexSize, SDL_GPU_BUFFERUSAGE_VERTEX);
+    indexBuffer  = window->createBuffer(indexSize,  SDL_GPU_BUFFERUSAGE_INDEX);
     if (!vertexBuffer || !indexBuffer) {
         printf("Error creating vertex/index buffer: %s\n", SDL_GetError());
         return;
     }
 
     // --- Staging for vertex+index (one big upload) ---
-    transferBuffer = createTransferBuffer(vertexSize + indexSize, window);
+    transferBuffer = window->createTransferBuffer(vertexSize + indexSize);
     if (!transferBuffer) {
         printf("Error creating transfer buffer: %s\n", SDL_GetError());
         return;
     }
 
-    transferMem = SDL_MapGPUTransferBuffer(window->device, transferBuffer, false);
+    transferMem = SDL_MapGPUTransferBuffer(window->getGPUDevice(), transferBuffer, false);
     if (!transferMem) {
         printf("Error mapping transfer buffer: %s\n", SDL_GetError());
         return;
     }
     memcpy(transferMem, p_vertexData.data(), vertexSize);
     memcpy((char*)transferMem + vertexSize, p_indices.data(), indexSize);
-    SDL_UnmapGPUTransferBuffer(window->device, transferBuffer);
+    SDL_UnmapGPUTransferBuffer(window->getGPUDevice(), transferBuffer);
 
-    vertexTransferBufferLocation = createTransferBufferLocation(transferBuffer, 0);
-    indexTransferBufferLocation  = createTransferBufferLocation(transferBuffer, vertexSize);
+    vertexTransferBufferLocation =  window->createTransferBufferLocation(transferBuffer, 0);
+    indexTransferBufferLocation  = window->createTransferBufferLocation(transferBuffer, vertexSize);
 
-    vertexBufferRegion = createBufferRegion(vertexSize, vertexBuffer);
-    indexBufferRegion  = createBufferRegion(indexSize,  indexBuffer);
+    vertexBufferRegion = window->createBufferRegion(vertexSize, vertexBuffer);
+    indexBufferRegion  =  window->createBufferRegion(indexSize,  indexBuffer);
 
     // --- Texture load + GPU texture ---
 
     texture1.create(p_fileName, window);
-    // --- Perform uploads (must be inside an active copy pass) ---
-    if (!window->copyPass) {
-        printf("WARNING: upload called without active copy pass!\n");
-    }
 
-
-
-    uploadBuffer(&vertexTransferBufferLocation, &vertexBufferRegion, window);
-    uploadBuffer(&indexTransferBufferLocation,  &indexBufferRegion,  window);
+     window->uploadBuffer(&vertexTransferBufferLocation, &vertexBufferRegion);
+     window->uploadBuffer(&indexTransferBufferLocation,  &indexBufferRegion);
     texture1.upload(window);
 
 
     // --- Bindings for draw ---
-    vertexBufferBinding = createBufferBinding(vertexBuffer);
-    indexBufferBinding  = createBufferBinding(indexBuffer);
+    vertexBufferBinding =  window->createBufferBinding(vertexBuffer);
+    indexBufferBinding  =  window->createBufferBinding(indexBuffer);
 
     transform = p_transform;
 }
@@ -79,17 +73,17 @@ void Entity::draw(Window* window) {
 
     transform.translate(window->projection);
 
-    SDL_BindGPUVertexBuffers(window->renderPass, 0, &vertexBufferBinding, 1);
-    SDL_BindGPUIndexBuffer(window->renderPass, &indexBufferBinding, SDL_GPU_INDEXELEMENTSIZE_32BIT);
+    SDL_BindGPUVertexBuffers(window->getRenderPass(), 0, &vertexBufferBinding, 1);
+    SDL_BindGPUIndexBuffer(window->getRenderPass(), &indexBufferBinding, SDL_GPU_INDEXELEMENTSIZE_32BIT);
 
-    SDL_PushGPUVertexUniformData(window->commandBuffer, 0, transform.getUBOData(),
+    SDL_PushGPUVertexUniformData(window->getCommandBuffer(), 0, transform.getUBOData(),
         transform.getUBOSize());
 
     texture1.bind(window, 0, 1); // → set=2, binding=0
 
 
 
-    SDL_DrawGPUIndexedPrimitives(window->renderPass, (Uint32)indiciesCount, 1, 0, 0, 0);
+    SDL_DrawGPUIndexedPrimitives(window->getRenderPass(), (Uint32)indiciesCount, 1, 0, 0, 0);
 }
 
 
@@ -138,15 +132,15 @@ std::vector<VertexData> loadModel(const std::string& path, std::vector<Uint32>& 
 
 void Entity::destroy(Window* window){
     if (vertexBuffer) {
-        SDL_ReleaseGPUBuffer(window->device, vertexBuffer);
+        SDL_ReleaseGPUBuffer(window->getGPUDevice(), vertexBuffer);
         vertexBuffer = NULL;
     }
     if (indexBuffer) {
-        SDL_ReleaseGPUBuffer(window->device, indexBuffer);
+        SDL_ReleaseGPUBuffer(window->getGPUDevice(), indexBuffer);
         indexBuffer = NULL;
     }
     if (transferBuffer) {
-        SDL_ReleaseGPUTransferBuffer(window->device, transferBuffer);
+        SDL_ReleaseGPUTransferBuffer(window->getGPUDevice(), transferBuffer);
         transferBuffer = NULL;
     }
     texture1.destroy(window);

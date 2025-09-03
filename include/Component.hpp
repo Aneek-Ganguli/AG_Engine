@@ -16,10 +16,10 @@ public:
     Uint32 getUBOSize();
     void translate(glm::mat4 projection);
 private:
-    vec3 position,scale,rotate;
-    mat4 M;
-    float rotateAngle;
-    UBO transform;
+    vec3 position{},scale{},rotate{};
+    mat4 M{};
+    float rotateAngle{};
+    UBO transform{};
 };
 
 struct Texture {
