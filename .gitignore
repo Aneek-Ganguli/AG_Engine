@@ -2,3 +2,4 @@ src/main.cpp
 cmake-build-debug/*
 include/glm/*
 .idea/*
+include/imgui/*
