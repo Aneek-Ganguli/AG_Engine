@@ -5,7 +5,9 @@
 #include <glm/glm.hpp>
 #include <assimp/cimport.h>
 #include <assimp/scene.h>
-#include <assimp/postprocess.h>
+#include <imgui/imgui.h>
+#include <imgui/imgui_impl_sdl3.h>
+#include <imgui/imgui_impl_sdlgpu3.h>
 
 #include "Window.hpp"
 #include "VertexData.hpp"
@@ -16,11 +18,15 @@ Window::Window(const char* title,int width,int height):width(width),height(heigh
 	if (!SDL_Init(SDL_INIT_VIDEO)) {
 		printf("SDL_Init failed: %s\n", SDL_GetError());
 	}
-	
-	window = SDL_CreateWindow(title,width,height,SDL_WINDOW_VULKAN);
+
+	float main_scale = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
+	SDL_WindowFlags window_flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY;
+	window = SDL_CreateWindow(title,width * main_scale,height * main_scale,window_flags);
 	if(window == NULL){
 		printf("Error creating window: %s\n",SDL_GetError());
 	}
+	SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+	SDL_ShowWindow(window);
 
 	device = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV,true,NULL);
 	if(device == NULL){
@@ -29,7 +35,39 @@ Window::Window(const char* title,int width,int height):width(width),height(heigh
 
 	SDL_ClaimWindowForGPUDevice(device,window);
 
+	SDL_SetGPUSwapchainParameters(device, window, SDL_GPU_SWAPCHAINCOMPOSITION_SDR, SDL_GPU_PRESENTMODE_VSYNC);
+
+	// Setup Dear ImGui context
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+
+	// Setup Dear ImGui style
+	ImGui::StyleColorsDark();
+	//ImGui::StyleColorsLight();
+
+	// Setup scaling
+	ImGuiStyle& style = ImGui::GetStyle();
+	style.ScaleAllSizes(main_scale);        // Bake a fixed style scale. (until we have a solution for dynamic style scaling, changing this requires resetting Style + calling this again)
+	style.FontScaleDpi = main_scale;        // Set initial font scale. (using io.ConfigDpiScaleFonts=true makes this unnecessary. We leave both here for documentation purpose)
+
+	// Setup Platform/Renderer backends
+	ImGui_ImplSDL3_InitForSDLGPU(window);
+	ImGui_ImplSDLGPU3_InitInfo init_info = {};
+	init_info.Device = device;
+	init_info.ColorTargetFormat = SDL_GetGPUSwapchainTextureFormat(device, window);
+	init_info.MSAASamples = SDL_GPU_SAMPLECOUNT_1;                      // Only used in multi-viewports mode.
+	init_info.SwapchainComposition = SDL_GPU_SWAPCHAINCOMPOSITION_SDR;  // Only used in multi-viewports mode.
+	init_info.PresentMode = SDL_GPU_PRESENTMODE_VSYNC;
+	ImGui_ImplSDLGPU3_Init(&init_info);
+
 	path = SDL_GetBasePath();
+	depthTexture = createDepthStencilTexture();
+	if (!depthTexture) {
+		printf("Error creating depth texture: %s\n", SDL_GetError());
+	}
 }
 
 SDL_GPUShader* Window::loadShader(
@@ -109,6 +147,10 @@ SDL_GPUShader* Window::loadShader(
 
 
 void Window::startFrame(){
+	// ImGui_ImplSDLGPU3_NewFrame();
+	// ImGui_ImplSDL3_NewFrame();
+	// ImGui::NewFrame();
+
     commandBuffer = SDL_AcquireGPUCommandBuffer(device);
     if(commandBuffer == NULL){
         printf("Error aquire command buffer: %s: \n",SDL_GetError());
@@ -124,20 +166,35 @@ void Window::startFrame(){
 	colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
 	colorTargetInfo.clear_color = {0.0f,1.0f,1.0f,1.0f};
 
+	SDL_GPUDepthStencilTargetInfo depthStencilTargetInfo{};
+	depthStencilTargetInfo.texture = depthTexture;
+	depthStencilTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
+	depthStencilTargetInfo.store_op = SDL_GPU_STOREOP_DONT_CARE;
+	depthStencilTargetInfo.clear_depth = 1.0f;
+
     renderPass =  SDL_BeginGPURenderPass(commandBuffer,
         &colorTargetInfo,
         1,
-        NULL
+        &depthStencilTargetInfo
     );
     if(renderPass == NULL){
         printf("Error begain render pass: %s \n",SDL_GetError());
     }
 
     SDL_BindGPUGraphicsPipeline(renderPass,pipeline);
+
+
 }
 
 void Window::endFrame(){
-    SDL_EndGPURenderPass(renderPass);
+
+	// ImGui::Render();
+	// ImDrawData* draw_data = ImGui::GetDrawData();
+	// ImGui_ImplSDLGPU3_PrepareDrawData(draw_data, commandBuffer);
+	//
+	// ImGui_ImplSDLGPU3_RenderDrawData(draw_data, commandBuffer, renderPass);
+
+	SDL_EndGPURenderPass(renderPass);
     if(!SDL_SubmitGPUCommandBuffer(commandBuffer)){
         printf("Error submit command buffer: %s\n",SDL_GetError());
     }
@@ -261,6 +318,14 @@ void Window::createGraphicsPipeline() {
 	SDL_GPUGraphicsPipelineTargetInfo graphicsPipelineTargetInfo{};
 	graphicsPipelineTargetInfo.num_color_targets = 1;
 	graphicsPipelineTargetInfo.color_target_descriptions = &colorTargetDescription;
+	graphicsPipelineTargetInfo.has_depth_stencil_target = true;
+	graphicsPipelineTargetInfo.depth_stencil_format = SDL_GPU_TEXTUREFORMAT_D24_UNORM;
+
+
+	SDL_GPUDepthStencilState depthStencilState{};
+	depthStencilState.enable_depth_test = true;
+	depthStencilState.enable_depth_write = true;
+	depthStencilState.compare_op = SDL_GPU_COMPAREOP_LESS;
 
 	SDL_GPUGraphicsPipelineCreateInfo graphics_pipeline_create_info{};
 	graphics_pipeline_create_info.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
@@ -268,6 +333,7 @@ void Window::createGraphicsPipeline() {
 	graphics_pipeline_create_info.vertex_input_state = vertexInput;
 	graphics_pipeline_create_info.vertex_shader = vertexShader;
 	graphics_pipeline_create_info.fragment_shader = fragmentShader;
+	graphics_pipeline_create_info.depth_stencil_state = depthStencilState;
 
     pipeline = SDL_CreateGPUGraphicsPipeline(device,&graphics_pipeline_create_info);
     if(pipeline == NULL){
@@ -315,14 +381,27 @@ SDL_Surface* loadImage(const char* imageFilename, int desiredChannels){
 
 SDL_GPUTexture* Window::createTexture(SDL_Surface* surface){
 	SDL_GPUTextureCreateInfo texture_create_info{};
+
 	texture_create_info.format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM;
 	texture_create_info.width = surface->w;
 	texture_create_info.height = surface->h;
 	texture_create_info.layer_count_or_depth = 1;
 	texture_create_info.num_levels = 1;
 	texture_create_info.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER;
+
     return SDL_CreateGPUTexture(device, &texture_create_info);
 
+}
+
+SDL_GPUTexture* Window::createDepthStencilTexture() {
+	SDL_GPUTextureCreateInfo texture_create_info{};
+	texture_create_info.format = SDL_GPU_TEXTUREFORMAT_D24_UNORM;
+	texture_create_info.width = width;
+	texture_create_info.height = height;
+	texture_create_info.layer_count_or_depth = 1;
+	texture_create_info.num_levels = 1;
+	texture_create_info.usage = SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET;
+	return SDL_CreateGPUTexture(device, &texture_create_info);
 }
 
 SDL_GPUSampler* Window::createGPUSampler(){
@@ -342,6 +421,9 @@ void Window::uploadTexture(SDL_GPUTextureTransferInfo* textureTransferInfo,SDL_G
 }
 
 void Window::cleanUp(){
+	ImGui_ImplSDL3_Shutdown();
+	ImGui_ImplSDLGPU3_Shutdown();
+	ImGui::DestroyContext();
     SDL_ReleaseGPUShader(device,vertexShader);
     SDL_ReleaseGPUShader(device,fragmentShader);
     SDL_ReleaseGPUGraphicsPipeline(device,pipeline);
@@ -355,7 +437,7 @@ void Window::createPerspective(float p_fov) {
 	fov = p_fov;
 
 	// glm_perspective(fov, (float)width/height, 0.1f, 1000.0f, P);
-	projection = perspective(fov,(float)width/height,0.1f,1000.0f);
+	projection = perspective(glm::radians(fov),(float)width/height,0.0001f,1000.0f);
 }
 
 

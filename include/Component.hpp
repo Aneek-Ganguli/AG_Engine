@@ -31,6 +31,7 @@ public:
 
 private:
     SDL_GPUTexture *texture{};
+    // SDL_GPUTexture* depthTexture{};
     SDL_GPUTransferBuffer *textureTransferBuffer{};
     SDL_Surface* surface{};
     void* textureTransferMem{};

@@ -21,10 +21,11 @@ void Transform3D::translate(glm::mat4 projection) {
     // P = glm::perspective(fov,(float)windowWidth/windowHeight,0.1f,1000.0f);
     M = glm::mat4(1.0f);
     // translate (glm::translate returns a new matrix)
-    // std::cout << position.x << position.y << position.z << std::endl;
+    // std::cout << position.x << position.y << position.z << std::endl
     M = glm::translate(M, position);
     // scale
     M = glm::scale(M, scale);
+    // M = glm::rotate(M, rotateAngle, rotate);
     // multiply P * M -> MVP
     transform.mvp = projection * M;
     // print_mat4(M);
@@ -42,6 +43,12 @@ void Texture::create(const char *p_fileName,Window* window) {
         printf("Error creating GPU texture: %s\n", SDL_GetError());
         return;
     }
+
+    // depthTexture = window->createDepthStencilTexture();
+    // if (!depthTexture) {
+        // printf("Error creating depth texture: %s\n", SDL_GetError());
+        // return;
+    // }
 
     // --- Texture staging + upload info ---
     const Uint32 texBytes = (surface->w * surface->h * 4);

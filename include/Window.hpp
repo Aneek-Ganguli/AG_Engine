@@ -30,7 +30,10 @@ public:
 	void uploadBuffer(SDL_GPUTransferBufferLocation* transferBufferLocation, SDL_GPUBufferRegion* bufferRegion);
 	void createGraphicsPipeline();
 	void createPerspective(float p_fov);
-	SDL_GPUTexture* createTexture(SDL_Surface* surface);
+	SDL_GPUTexture* createTexture(SDL_Surface *surface);
+
+	SDL_GPUTexture *createDepthStencilTexture();
+
 	SDL_GPUSampler* createGPUSampler();
 	void uploadTexture(SDL_GPUTextureTransferInfo* textureTransferInfo,SDL_GPUTextureRegion* textureRegion);
 	void cleanUp();
@@ -57,6 +60,7 @@ private:
     SDL_GPUSampler* sampler{};
     int width,height{};
     float fov{};
+	SDL_GPUTexture* depthTexture{};
 } Window;
 
 
