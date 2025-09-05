@@ -32,7 +32,7 @@ public:
 	void createPerspective(float p_fov);
 	SDL_GPUTexture* createTexture(SDL_Surface *surface);
 
-	SDL_GPUTexture *createDepthStencilTexture();
+	void createDepthStencilTexture();
 
 	SDL_GPUSampler* createGPUSampler();
 	void uploadTexture(SDL_GPUTextureTransferInfo* textureTransferInfo,SDL_GPUTextureRegion* textureRegion);
@@ -63,6 +63,7 @@ private:
     SDL_GPUCopyPass *copyPass{};
     SDL_GPUSampler* sampler{};
     int width,height{};
+	int oldWidth = 800,oldHeight = 600;
     float fov{};
 	SDL_GPUTexture* depthTexture{};
 } Window;
