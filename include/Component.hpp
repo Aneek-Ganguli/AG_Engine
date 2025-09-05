@@ -14,7 +14,7 @@ public:
     Transform3D():position(NULL),M(NULL),scale(NULL),rotate(NULL),rotateAngle(NULL),transform(NULL){}
     UBO* getUBOData();
     Uint32 getUBOSize();
-    void translate(glm::mat4 projection);
+    void translate(glm::mat4 view, glm::mat4 projection);
 private:
     vec3 position{},scale{},rotate{};
     mat4 M{};

@@ -2,6 +2,10 @@
 #include <glm/ext/matrix_transform.hpp>
 
 #include "Component.hpp"
+#include "Component.hpp"
+#include "Component.hpp"
+#include "Component.hpp"
+#include "Component.hpp"
 #include "Window.hpp"
 #include "glm/ext/matrix_clip_space.hpp"
 
@@ -16,7 +20,7 @@ Uint32 Transform3D::getUBOSize() {
     return sizeof(transform);
 }
 
-void Transform3D::translate(glm::mat4 projection) {
+void Transform3D::translate(glm::mat4 view,glm::mat4 projection) {
 
     // P = glm::perspective(fov,(float)windowWidth/windowHeight,0.1f,1000.0f);
     M = glm::mat4(1.0f);
@@ -27,7 +31,7 @@ void Transform3D::translate(glm::mat4 projection) {
     M = glm::scale(M, scale);
     // M = glm::rotate(M, rotateAngle, rotate);
     // multiply P * M -> MVP
-    transform.mvp = projection * M;
+    transform.mvp = projection * view * M;
     // print_mat4(M);
 }
 
@@ -44,13 +48,7 @@ void Texture::create(const char *p_fileName,Window* window) {
         return;
     }
 
-    // depthTexture = window->createDepthStencilTexture();
-    // if (!depthTexture) {
-        // printf("Error creating depth texture: %s\n", SDL_GetError());
-        // return;
-    // }
 
-    // --- Texture staging + upload info ---
     const Uint32 texBytes = (surface->w * surface->h * 4);
     textureTransferBuffer = window->createTransferBuffer(texBytes);
     if (!textureTransferBuffer) {

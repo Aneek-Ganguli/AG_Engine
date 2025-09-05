@@ -71,7 +71,7 @@ Entity::Entity(std::vector<VertexData> p_vertexData, std::vector<Uint32> p_indic
 
 void Entity::draw(Window* window) {
 
-    transform.translate(window->projection);
+    transform.translate(window->view, window->projection);
 
     SDL_BindGPUVertexBuffers(window->getRenderPass(), 0, &vertexBufferBinding, 1);
     SDL_BindGPUIndexBuffer(window->getRenderPass(), &indexBufferBinding, SDL_GPU_INDEXELEMENTSIZE_32BIT);

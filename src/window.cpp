@@ -12,6 +12,7 @@
 #include "Window.hpp"
 #include "VertexData.hpp"
 #include "glm/ext/matrix_clip_space.hpp"
+#include "glm/ext/matrix_transform.hpp"
 
 
 Window::Window(const char* title,int width,int height):width(width),height(height){
@@ -64,10 +65,9 @@ Window::Window(const char* title,int width,int height):width(width),height(heigh
 	ImGui_ImplSDLGPU3_Init(&init_info);
 
 	path = SDL_GetBasePath();
-	depthTexture = createDepthStencilTexture();
-	if (!depthTexture) {
-		printf("Error creating depth texture: %s\n", SDL_GetError());
-	}
+
+
+	// view = glm::lookAt(cameraPosition,cameraTarget,{0,1,0});
 }
 
 SDL_GPUShader* Window::loadShader(
@@ -159,6 +159,11 @@ void Window::startFrame(){
     if(!SDL_WaitAndAcquireGPUSwapchainTexture(commandBuffer,window,&swapchainTexture,NULL,NULL)){
         printf("Error acquire swapchain texture: %s\n",SDL_GetError());
     }
+
+	depthTexture = createDepthStencilTexture();
+	if (!depthTexture) {
+		printf("Error creating depth texture: %s\n", SDL_GetError());
+	}
 
 	SDL_GPUColorTargetInfo colorTargetInfo{};
 	colorTargetInfo.texture = swapchainTexture;
@@ -393,7 +398,8 @@ SDL_GPUTexture* Window::createTexture(SDL_Surface* surface){
 
 }
 
-SDL_GPUTexture* Window::createDepthStencilTexture() {
+SDL_GPUTexture* Window::createDepthStencilTexture(){
+	SDL_GetWindowSize(window,&width,&height);
 	SDL_GPUTextureCreateInfo texture_create_info{};
 	texture_create_info.format = SDL_GPU_TEXTUREFORMAT_D24_UNORM;
 	texture_create_info.width = width;

@@ -42,9 +42,13 @@ public:
 	SDL_GPUBufferRegion createBufferRegion(Uint32 size,SDL_GPUBuffer* buffer);
 	SDL_GPUBufferBinding createBufferBinding(SDL_GPUBuffer* buffer);
 	glm::mat4 projection;
+	glm::mat4 view = glm::mat4(1.0f);
 	SDL_GPUSampler* getSampler(){return sampler;};
 	SDL_GPURenderPass* getRenderPass(){return renderPass;};
 	SDL_GPUCommandBuffer* getCommandBuffer(){return commandBuffer;};
+
+	glm::vec3 cameraPosition;
+	glm::vec3 cameraTarget;
 
 private:
     SDL_Window *window{};
