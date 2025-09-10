@@ -16,7 +16,7 @@ static float windowHeight,windowWidth,fov;
 // static glm::mat4 P;
 
 
-typedef struct Window{
+struct Window{
 public:
 	Window(const char* title,int width,int height);
 	SDL_GPUShader* loadShader(const char* shaderFilename,Uint32 samplerCount,Uint32 uniformBufferCount,
@@ -47,8 +47,17 @@ public:
 	SDL_GPURenderPass* getRenderPass(){return renderPass;};
 	SDL_GPUCommandBuffer* getCommandBuffer(){return commandBuffer;};
 
-	glm::vec3 cameraPosition;
-	glm::vec3 cameraTarget;
+	glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f, 3.0f);
+	glm::vec3 cameraTarget= glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f, 0.0f);
+
+	void keyboadInput(SDL_Event &e, float deltaTime);
+
+	void mouseInput(SDL_Event &e);
+
+	float moveSpeed = 3.0f,lookSensitivity = 0.5f, pitch{},yaw{};
+
+	vec2 mouseRel{};
 
 private:
     SDL_Window *window{};

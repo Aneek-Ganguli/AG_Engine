@@ -12,11 +12,11 @@ struct VertexData {
     SDL_FColor color;
 };
 
-
-
 typedef struct UBO {
 	glm::mat4 mvp;
 } UBO;
+
+
 
 void perspective_bounds(float fovy, float aspect, float z,
                         float *xmin, float *xmax,

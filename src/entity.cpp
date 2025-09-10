@@ -54,8 +54,8 @@ Entity::Entity(std::vector<VertexData> p_vertexData, std::vector<Uint32> p_indic
 
     texture1.create(p_fileName, window);
 
-     window->uploadBuffer(&vertexTransferBufferLocation, &vertexBufferRegion);
-     window->uploadBuffer(&indexTransferBufferLocation,  &indexBufferRegion);
+    window->uploadBuffer(&vertexTransferBufferLocation, &vertexBufferRegion);
+    window->uploadBuffer(&indexTransferBufferLocation,  &indexBufferRegion);
     texture1.upload(window);
 
 
@@ -67,11 +67,9 @@ Entity::Entity(std::vector<VertexData> p_vertexData, std::vector<Uint32> p_indic
 }
 
 
+void Entity::draw(Window* window,float deltaTime) {
 
-
-void Entity::draw(Window* window) {
-
-    transform.translate(window->view, window->projection);
+    transform.translate(window->view, window->projection,deltaTime);
 
     SDL_BindGPUVertexBuffers(window->getRenderPass(), 0, &vertexBufferBinding, 1);
     SDL_BindGPUIndexBuffer(window->getRenderPass(), &indexBufferBinding, SDL_GPU_INDEXELEMENTSIZE_32BIT);

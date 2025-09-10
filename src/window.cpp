@@ -1,5 +1,5 @@
+#define GLM_ENABLE_EXPERIMENTAL
 #include <iostream>
-#include <stdio.h>
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h>
 #include <glm/glm.hpp>
@@ -8,11 +8,13 @@
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_sdl3.h>
 #include <imgui/imgui_impl_sdlgpu3.h>
+#include <glm/ext/matrix_clip_space.hpp>
+#include <glm/ext/matrix_transform.hpp>
+#include <glm/gtx/euler_angles.hpp>
+
 
 #include "Window.hpp"
 #include "VertexData.hpp"
-#include "glm/ext/matrix_clip_space.hpp"
-#include "glm/ext/matrix_transform.hpp"
 
 
 Window::Window(const char* title,int width,int height):width(width),height(height){
@@ -69,6 +71,12 @@ Window::Window(const char* title,int width,int height):width(width),height(heigh
 	createDepthStencilTexture();
 
 	// view = glm::lookAt(cameraPosition,cameraTarget,{0,1,0});
+
+	view = glm::lookAt(
+		cameraPos,   // eye (camera position)
+		cameraTarget,// center (what you’re looking at)
+		cameraUp     // up vector
+	);
 }
 
 SDL_GPUShader* Window::loadShader(
@@ -159,6 +167,12 @@ void Window::startFrame() {
 		createDepthStencilTexture();
 	}
 
+	view = glm::lookAt(
+		cameraPos,   // eye (camera position)
+		cameraTarget,// center (what you’re looking at)
+		cameraUp     // up vector
+	);
+
 	// Acquire command buffer and swapchain texture
 	commandBuffer = SDL_AcquireGPUCommandBuffer(device);
 	if (!commandBuffer) {
@@ -202,9 +216,11 @@ void Window::endFrame(){
 	// ImGui_ImplSDLGPU3_RenderDrawData(draw_data, commandBuffer, renderPass);
 
 	SDL_EndGPURenderPass(renderPass);
-    if(!SDL_SubmitGPUCommandBuffer(commandBuffer)){
-        printf("Error submit command buffer: %s\n",SDL_GetError());
+    if(!SDL_SubmitGPUCommandBuffer(commandBuffer)) {
+	    printf("Error submit command buffer: %s\n",SDL_GetError());
     }
+
+	mouseRel = {0,0};
 }
 
 SDL_GPUBuffer* Window::createBuffer(Uint32 size,SDL_GPUBufferUsageFlags usage ){
@@ -462,3 +478,59 @@ void Window::createPerspective(float p_fov) {
 }
 
 
+void Window::keyboadInput(SDL_Event& e,float deltaTime) {
+	vec2 move{};
+	if (e.type == SDL_EVENT_KEY_DOWN || e.type == SDL_EVENT_KEY_UP) {
+		if (e.key.scancode == SDL_SCANCODE_W) {
+			move.y = 1;
+		}
+
+		if (e.key.scancode == SDL_SCANCODE_S) {
+			move.y = -1;
+		}
+
+		if (e.key.scancode == SDL_SCANCODE_A) {
+			move.x = -1;
+		}
+
+		if (e.key.scancode == SDL_SCANCODE_D) {
+			move.x = 1;
+		}
+	}
+
+
+
+	mouseRel = {e.motion.xrel, e.motion.yrel};
+
+	vec2 mouseInput ;
+	mat3 lookMat;
+	if (e.type == SDL_EVENT_MOUSE_MOTION){
+		mouseInput = mouseRel * lookSensitivity;
+
+		yaw = std::clamp(yaw - mouseInput.x,-180.0f,180.0f);
+
+		pitch = std::clamp(pitch - mouseInput.y, -89.0f,89.0f);
+		std::cout << yaw << " " << pitch << std::endl;
+
+	}
+	lookMat = mat3(yawPitchRoll(radians(yaw),radians(pitch),radians(0.0f)));
+	vec3 forward{0,0,-1};
+	vec3 right = {1,0,0};
+	forward = lookMat * forward;
+	right = lookMat * right;
+
+	vec3 moveDir = forward * move.y + right * move.x;
+
+	std::cout << moveDir.x << " " << moveDir.y << " " << moveDir.z << std::endl;
+
+	cameraPos += moveDir * moveSpeed * deltaTime;
+
+
+	cameraTarget = cameraPos + forward;
+
+
+}
+
+void Window::mouseInput(SDL_Event& e) {
+
+}

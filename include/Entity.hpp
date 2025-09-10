@@ -14,7 +14,7 @@ public:
     Entity(std::vector<VertexData> p_vertexData, std::vector<Uint32> p_indices,Transform3D p_transform,
         const char* p_fileName,Window* window);
 
-    void draw(Window* e);
+    void draw(Window *window, float deltaTime);
 
     void destroy(Window* window);
 

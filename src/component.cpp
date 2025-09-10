@@ -20,7 +20,7 @@ Uint32 Transform3D::getUBOSize() {
     return sizeof(transform);
 }
 
-void Transform3D::translate(glm::mat4 view,glm::mat4 projection) {
+void Transform3D::translate(glm::mat4 view,glm::mat4 projection,float deltaTime) {
 
     // P = glm::perspective(fov,(float)windowWidth/windowHeight,0.1f,1000.0f);
     M = glm::mat4(1.0f);
@@ -29,7 +29,11 @@ void Transform3D::translate(glm::mat4 view,glm::mat4 projection) {
     M = glm::translate(M, position);
     // scale
     M = glm::scale(M, scale);
-    // M = glm::rotate(M, rotateAngle, rotate);
+    glm::vec3 rot0 = {0,0,0};
+    if (rotate != rot0 || rotateAngle != 0) {
+        M = glm::rotate(M, rotateAngle * deltaTime, rotate);
+    }
+
     // multiply P * M -> MVP
     transform.mvp = projection * view * M;
     // print_mat4(M);
