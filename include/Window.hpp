@@ -53,8 +53,6 @@ public:
 
 	void keyboadInput(SDL_Event &e, float deltaTime);
 
-	void mouseInput(SDL_Event &e);
-
 	float moveSpeed = 3.0f,lookSensitivity = 0.5f, pitch{},yaw{};
 
 	vec2 mouseRel{};

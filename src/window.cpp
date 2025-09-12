@@ -530,7 +530,3 @@ void Window::keyboadInput(SDL_Event& e,float deltaTime) {
 
 
 }
-
-void Window::mouseInput(SDL_Event& e) {
-
-}

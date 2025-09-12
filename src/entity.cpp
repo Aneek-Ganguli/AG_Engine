@@ -145,6 +145,3 @@ void Entity::destroy(Window* window){
     // texture2.destroy(window);
 }
 
-// void setScale(Entity* e,vec3 scale){
-//     glm_vec3_copy(scale,scale);
-// }
