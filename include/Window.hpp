@@ -2,6 +2,8 @@
 #include <iostream>
 #include <SDL3/SDL.h>
 #include <glm/glm.hpp>
+#include <imgui/imgui_impl_sdl3.h>
+#include <imgui/imgui_impl_sdlgpu3.h>
 // #define CGLTF_IMPLEMENTATION
 // #include <cgltf/cgltf.h>
 
@@ -9,15 +11,17 @@
 
 using namespace glm;
 
-static const char* path = nullptr;
 
-static struct ImGuiIO* io{};
-
-static float windowHeight,windowWidth,fov;
 
 // static glm::mat4 P;
 
 namespace AG_Engine {
+	static const char* path = nullptr;
+
+	static struct ImGuiIO* io{};
+
+	static float windowHeight,windowWidth,fov;
+
 	class Window{
 	public:
 		Window(const char* title,int width,int height);
@@ -78,6 +82,10 @@ namespace AG_Engine {
 		int oldWidth = 800,oldHeight = 600;
 		float fov{};
 		SDL_GPUTexture* depthTexture{};
+
+		//ImGui
+		ImDrawData* drawData{};
+		SDL_GPURenderPass* imguiRenderPass{};
 	};
 }
 

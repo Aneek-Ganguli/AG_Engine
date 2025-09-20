@@ -163,6 +163,16 @@ SDL_GPUShader* Window::loadShader(
 
 
 void Window::startFrame() {
+	ImGui_ImplSDLGPU3_NewFrame();
+	ImGui_ImplSDL3_NewFrame();
+	ImGui::NewFrame();
+
+
+	ImGui::ShowDemoWindow();
+
+	ImGui::Render();
+	drawData = ImGui::GetDrawData();
+
 	// Get current window size
 	int newWidth, newHeight;
 	SDL_GetWindowSize(window, &newWidth, &newHeight);
@@ -233,11 +243,34 @@ void Window::endFrame(){
 	//
 	// ImGui_ImplSDLGPU3_RenderDrawData(draw_data, commandBuffer, renderPass);
 	if (!(SDL_GetWindowFlags(window) & SDL_WINDOW_MINIMIZED)) {
+		//game
 		SDL_EndGPURenderPass(renderPass);
+
+		//ImGui
+		SDL_GPUColorTargetInfo ImGuiColorTargetInfo{};
+
+		ImGuiColorTargetInfo.texture = swapchainTexture;
+		ImGuiColorTargetInfo.load_op = SDL_GPU_LOADOP_LOAD;
+		ImGuiColorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
+
+		ImGui_ImplSDLGPU3_PrepareDrawData(drawData, commandBuffer);
+
+		imguiRenderPass = SDL_BeginGPURenderPass(commandBuffer,&ImGuiColorTargetInfo,1,nullptr);
+
+		if (imguiRenderPass == nullptr) {
+			std::cerr << "Failed to begin imguiRenderPass" << SDL_GetError() << std::endl;
+		}
+
+		ImGui_ImplSDLGPU3_RenderDrawData(drawData,commandBuffer,imguiRenderPass);
+
+		SDL_EndGPURenderPass(imguiRenderPass);
+
+		// DO NOT TOUCH
 		if(!SDL_SubmitGPUCommandBuffer(commandBuffer)) {
 			printf("Error submit command buffer: %s\n",SDL_GetError());
 		}
 	}
+
 
 	mouseRel = {0,0};
 }
@@ -507,7 +540,7 @@ void Window::keyboadInput(SDL_Event& e,float deltaTime) {
 
 
 	cameraTarget = cameraPos + forward;
-	SDL_WarpMouseInWindow(window, windowWidth/2, windowHeight/2);
+	// SDL_WarpMouseInWindow(window, windowWidth/2, windowHeight/2);
 }
 
 void print_mat4(mat4 m) {

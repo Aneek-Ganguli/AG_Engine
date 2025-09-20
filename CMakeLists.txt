@@ -15,6 +15,7 @@ add_executable(AG_Engine
         include/imgui/imgui_impl_sdlgpu3.cpp
         include/imgui/imgui_draw.cpp
         include/imgui/imgui_widgets.cpp
+        include/imgui/imgui_demo.cpp
 
         src/main.cpp
         src/entity.cpp
