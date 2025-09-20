@@ -6,20 +6,18 @@
 
 using namespace glm;
 
-struct VertexData {
-    glm::vec3 position;
-    glm::vec2 texCoord;
-    SDL_FColor color;
-};
+namespace AG_Engine {
+    struct VertexData {
+        glm::vec3 position;
+        glm::vec2 texCoord;
+        SDL_FColor color;
+    };
 
-typedef struct UBO {
-	glm::mat4 mvp;
-} UBO;
+    typedef struct UBO {
+        glm::mat4 mvp;
+    } UBO;
+}
 
 
-
-void perspective_bounds(float fovy, float aspect, float z,
-                        float *xmin, float *xmax,
-                        float *ymin, float *ymax);
 
 // vec2* normalize(float x, float y);

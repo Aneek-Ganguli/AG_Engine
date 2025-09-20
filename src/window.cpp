@@ -16,6 +16,8 @@
 #include "Window.hpp"
 #include "VertexData.hpp"
 
+using namespace AG_Engine;
+
 
 Window::Window(const char* title,int width,int height):width(width),height(height){
 	if (!SDL_Init(SDL_INIT_VIDEO)) {
@@ -43,9 +45,9 @@ Window::Window(const char* title,int width,int height):width(width),height(heigh
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+	io = &ImGui::GetIO(); (void)io;
+	io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+	io->ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 
 	// Setup Dear ImGui style
 	ImGui::StyleColorsDark();
@@ -174,36 +176,47 @@ void Window::startFrame() {
 	);
 
 	// Acquire command buffer and swapchain texture
-	commandBuffer = SDL_AcquireGPUCommandBuffer(device);
-	if (!commandBuffer) {
-		printf("Error acquiring command buffer: %s\n", SDL_GetError());
+	// if (SDL_GetWindowFlags(window) != SDL_WINDOW_MINIMIZED) {
+
+	Uint32 flags = SDL_GetWindowFlags(window);
+
+	if (!(SDL_GetWindowFlags(window) & SDL_WINDOW_MINIMIZED)) {
+		commandBuffer = SDL_AcquireGPUCommandBuffer(device);
+		if (!commandBuffer) {
+			printf("Error acquiring command buffer: %s\n", SDL_GetError());
+		}
+
+		if (!SDL_WaitAndAcquireGPUSwapchainTexture(commandBuffer, window, &swapchainTexture, NULL, NULL)) {
+			printf("Error acquiring swapchain texture: %s\n", SDL_GetError());
+		}
+
+		SDL_GPUColorTargetInfo colorTargetInfo{};
+		colorTargetInfo.texture = swapchainTexture;
+		colorTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
+		colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
+		colorTargetInfo.clear_color = {0.0f, 1.0f, 1.0f, 1.0f};
+
+		SDL_GPUDepthStencilTargetInfo depthStencilTargetInfo{};
+		depthStencilTargetInfo.texture = depthTexture;
+		depthStencilTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
+		depthStencilTargetInfo.store_op = SDL_GPU_STOREOP_DONT_CARE;
+		depthStencilTargetInfo.clear_depth = 1.0f;
+
+		// std::cout << "Minimizing..." << std::endl;
+		renderPass = SDL_BeginGPURenderPass(commandBuffer,
+										   &colorTargetInfo,
+										   1,
+										   &depthStencilTargetInfo);
+		if (!renderPass) {
+			printf("Error beginning render pass: %s\n", SDL_GetError());
+		}
+
+		SDL_BindGPUGraphicsPipeline(renderPass, pipeline);
 	}
-
-	if (!SDL_WaitAndAcquireGPUSwapchainTexture(commandBuffer, window, &swapchainTexture, NULL, NULL)) {
-		printf("Error acquiring swapchain texture: %s\n", SDL_GetError());
-	}
-
-	SDL_GPUColorTargetInfo colorTargetInfo{};
-	colorTargetInfo.texture = swapchainTexture;
-	colorTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
-	colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
-	colorTargetInfo.clear_color = {0.0f, 1.0f, 1.0f, 1.0f};
-
-	SDL_GPUDepthStencilTargetInfo depthStencilTargetInfo{};
-	depthStencilTargetInfo.texture = depthTexture;
-	depthStencilTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
-	depthStencilTargetInfo.store_op = SDL_GPU_STOREOP_DONT_CARE;
-	depthStencilTargetInfo.clear_depth = 1.0f;
-
-	renderPass = SDL_BeginGPURenderPass(commandBuffer,
-										&colorTargetInfo,
-										1,
-										&depthStencilTargetInfo);
-	if (!renderPass) {
-		printf("Error beginning render pass: %s\n", SDL_GetError());
-	}
-
-	SDL_BindGPUGraphicsPipeline(renderPass, pipeline);
+	// }
+	// else {
+	// 	std::cout << "Oh no theres a problem" << std::endl;
+	// }
 }
 
 
@@ -214,11 +227,12 @@ void Window::endFrame(){
 	// ImGui_ImplSDLGPU3_PrepareDrawData(draw_data, commandBuffer);
 	//
 	// ImGui_ImplSDLGPU3_RenderDrawData(draw_data, commandBuffer, renderPass);
-
-	SDL_EndGPURenderPass(renderPass);
-    if(!SDL_SubmitGPUCommandBuffer(commandBuffer)) {
-	    printf("Error submit command buffer: %s\n",SDL_GetError());
-    }
+	if (!(SDL_GetWindowFlags(window) & SDL_WINDOW_MINIMIZED)) {
+		SDL_EndGPURenderPass(renderPass);
+		if(!SDL_SubmitGPUCommandBuffer(commandBuffer)) {
+			printf("Error submit command buffer: %s\n",SDL_GetError());
+		}
+	}
 
 	mouseRel = {0,0};
 }
@@ -279,17 +293,6 @@ SDL_GPUBufferBinding Window::createBufferBinding(SDL_GPUBuffer* buffer){
         .buffer = buffer,
         .offset = 0
     };
-}
-
-void print_mat4(mat4 m) {
-	for (int i = 0; i < 4; i++) {
-		printf("| ");
-		for (int j = 0; j < 4; j++) {
-			printf("%8.3f ", m[i][j]);
-		}
-		printf("|\n");
-	}
-	printf("\n");
 }
 
 void Window::createGraphicsPipeline() {
@@ -372,35 +375,7 @@ void Window::createGraphicsPipeline() {
 	std::cout << windowWidth << " " << windowHeight << std::endl;
 }
 
-SDL_Surface* loadImage(const char* imageFilename, int desiredChannels){
-		char fullPath[256];
-	SDL_Surface *result{};
-	SDL_PixelFormat format{};
 
-	SDL_snprintf(fullPath, sizeof(fullPath), "%s/%s", path, imageFilename);
-
-	result = IMG_Load(fullPath);
-	if (result == NULL){
-		SDL_Log("Failed to load BMP: %s", SDL_GetError());
-		return NULL;
-	}
-
-	if (desiredChannels == 4){
-		format = SDL_PIXELFORMAT_ABGR8888;
-	}
-	else{
-		SDL_assert(!"Unexpected desiredChannels");
-		SDL_DestroySurface(result);
-		return NULL;
-	}
-	if (result->format != format){
-		SDL_Surface *next = SDL_ConvertSurface(result, format);
-		SDL_DestroySurface(result);
-		result = next;
-	}
-
-	return result;
-}
 
 SDL_GPUTexture* Window::createTexture(SDL_Surface* surface){
 	SDL_GPUTextureCreateInfo texture_create_info{};
@@ -510,8 +485,6 @@ void Window::keyboadInput(SDL_Event& e,float deltaTime) {
 		yaw = std::clamp(yaw - mouseInput.x,-180.0f,180.0f);
 
 		pitch = std::clamp(pitch - mouseInput.y, -89.0f,89.0f);
-		std::cout << yaw << " " << pitch << std::endl;
-
 	}
 	lookMat = mat3(yawPitchRoll(radians(yaw),radians(pitch),radians(0.0f)));
 	vec3 forward{0,0,-1};
@@ -521,12 +494,54 @@ void Window::keyboadInput(SDL_Event& e,float deltaTime) {
 
 	vec3 moveDir = forward * move.y + right * move.x;
 
-	std::cout << moveDir.x << " " << moveDir.y << " " << moveDir.z << std::endl;
+	// std::cout << moveDir.x << " " << moveDir.y << " " << moveDir.z << std::endl;
 
 	cameraPos += moveDir * moveSpeed * deltaTime;
 
 
 	cameraTarget = cameraPos + forward;
+	SDL_WarpMouseInWindow(window, windowWidth/2, windowHeight/2);
+}
+
+void print_mat4(mat4 m) {
+	for (int i = 0; i < 4; i++) {
+		printf("| ");
+		for (int j = 0; j < 4; j++) {
+			printf("%8.3f ", m[i][j]);
+		}
+		printf("|\n");
+	}
+	printf("\n");
+}
 
 
+
+SDL_Surface* loadImage(const char* imageFilename, int desiredChannels){
+	char fullPath[256];
+	SDL_Surface *result{};
+	SDL_PixelFormat format{};
+
+	SDL_snprintf(fullPath, sizeof(fullPath), "%s/%s", path, imageFilename);
+
+	result = IMG_Load(fullPath);
+	if (result == NULL){
+		SDL_Log("Failed to load BMP: %s", SDL_GetError());
+		return NULL;
+	}
+
+	if (desiredChannels == 4){
+		format = SDL_PIXELFORMAT_ABGR8888;
+	}
+	else{
+		SDL_assert(!"Unexpected desiredChannels");
+		SDL_DestroySurface(result);
+		return NULL;
+	}
+	if (result->format != format){
+		SDL_Surface *next = SDL_ConvertSurface(result, format);
+		SDL_DestroySurface(result);
+		result = next;
+	}
+
+	return result;
 }

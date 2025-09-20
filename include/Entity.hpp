@@ -9,43 +9,46 @@
 #include "VertexData.hpp"
 #include "Component.hpp"
 
-class Entity{
-public:
-    Entity(std::vector<VertexData> p_vertexData, std::vector<Uint32> p_indices,Transform3D p_transform,
-        const char* p_fileName,Window* window);
 
-    void draw(Window *window, float deltaTime);
+namespace AG_Engine{
+    class Entity{
+    public:
+        Entity(std::vector<VertexData> p_vertexData, std::vector<Uint32> p_indices,Transform3D p_transform,
+            const char* p_fileName,Window* window);
 
-    void destroy(Window* window);
+        void draw(Window *window, float deltaTime);
 
-private:
+        void destroy(Window* window);
 
-    //vertex
-    SDL_GPUBuffer *vertexBuffer{};
-    SDL_GPUTransferBufferLocation vertexTransferBufferLocation{};
-    SDL_GPUBufferRegion vertexBufferRegion{};
-    SDL_GPUBufferBinding vertexBufferBinding{};
+    private:
 
-    //index
-    SDL_GPUBuffer *indexBuffer{};
-    SDL_GPUTransferBufferLocation indexTransferBufferLocation{};
-    SDL_GPUBufferRegion indexBufferRegion{};
-    SDL_GPUBufferBinding indexBufferBinding{};
+        //vertex
+        SDL_GPUBuffer *vertexBuffer{};
+        SDL_GPUTransferBufferLocation vertexTransferBufferLocation{};
+        SDL_GPUBufferRegion vertexBufferRegion{};
+        SDL_GPUBufferBinding vertexBufferBinding{};
 
-    //index + vertex
-    SDL_GPUTransferBuffer *transferBuffer{};
-    void *transferMem{};
+        //index
+        SDL_GPUBuffer *indexBuffer{};
+        SDL_GPUTransferBufferLocation indexTransferBufferLocation{};
+        SDL_GPUBufferRegion indexBufferRegion{};
+        SDL_GPUBufferBinding indexBufferBinding{};
 
-    //texture
-    Texture texture1{};
+        //index + vertex
+        SDL_GPUTransferBuffer *transferBuffer{};
+        void *transferMem{};
+
+        //texture
+        Texture texture1{};
 
 
-    //Transform
-    Transform3D transform{};
+        //Transform
+        Transform3D transform{};
 
-    //Misc
-    int verticiesCount{}, indiciesCount{};
-} ;
+        //Misc
+        int verticiesCount{}, indiciesCount{};
+    } ;
+}
 
 // void createEntity(std::vector<VertexData> vertexData, std::vector<Uint32> indicies, const char* fileName,
     // vec3 position,vec3 scale,struct Window *window, struct Entity *e);
@@ -57,4 +60,4 @@ private:
 
 // void setScale(Entity* e, vec3 scale);
 
-std::vector<VertexData> loadModel(const std::string& path, std::vector<Uint32>& indices);
+std::vector<AG_Engine::VertexData> loadModel(const std::string& path, std::vector<Uint32>& indices);

@@ -9,6 +9,8 @@
 #include "Entity.hpp"
 #include "VertexData.hpp"
 
+using namespace AG_Engine;
+
 Entity::Entity(std::vector<VertexData> p_vertexData, std::vector<Uint32> p_indices, Transform3D p_transform ,
     const char* p_fileName,Window* window) {
     // Reset everything
@@ -69,19 +71,21 @@ Entity::Entity(std::vector<VertexData> p_vertexData, std::vector<Uint32> p_indic
 
 void Entity::draw(Window* window,float deltaTime) {
 
-    transform.translate(window->view, window->projection,deltaTime);
+    if (!(SDL_GetWindowFlags(window->getWindow()) & SDL_WINDOW_MINIMIZED)){
+        transform.translate(window->view, window->projection,deltaTime);
 
-    SDL_BindGPUVertexBuffers(window->getRenderPass(), 0, &vertexBufferBinding, 1);
-    SDL_BindGPUIndexBuffer(window->getRenderPass(), &indexBufferBinding, SDL_GPU_INDEXELEMENTSIZE_32BIT);
+        SDL_BindGPUVertexBuffers(window->getRenderPass(), 0, &vertexBufferBinding, 1);
+        SDL_BindGPUIndexBuffer(window->getRenderPass(), &indexBufferBinding, SDL_GPU_INDEXELEMENTSIZE_32BIT);
 
-    SDL_PushGPUVertexUniformData(window->getCommandBuffer(), 0, transform.getUBOData(),
-        transform.getUBOSize());
+        SDL_PushGPUVertexUniformData(window->getCommandBuffer(), 0, transform.getUBOData(),
+            transform.getUBOSize());
 
-    texture1.bind(window, 0, 1); // → set=2, binding=0
+        texture1.bind(window, 0, 1); // → set=2, binding=0
 
 
 
-    SDL_DrawGPUIndexedPrimitives(window->getRenderPass(), (Uint32)indiciesCount, 1, 0, 0, 0);
+        SDL_DrawGPUIndexedPrimitives(window->getRenderPass(), (Uint32)indiciesCount, 1, 0, 0, 0);
+    }
 }
 
 
