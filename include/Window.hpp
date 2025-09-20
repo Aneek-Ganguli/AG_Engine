@@ -21,8 +21,9 @@ namespace AG_Engine {
 	class Window{
 	public:
 		Window(const char* title,int width,int height);
-		SDL_GPUShader* loadShader(const char* shaderFilename,Uint32 samplerCount,Uint32 uniformBufferCount,
-		Uint32 storageBufferCount,Uint32 storageTextureCount);
+		SDL_GPUShader* loadShader(void *code, size_t codeSize,
+		                          Uint32 samplerCount, Uint32 uniformBufferCount, Uint32 storageBufferCount, Uint32 storageTextureCount, SDL_GPUShaderStage
+		                          shaderStage);
 		void startFrame();
 		void endFrame();
 		SDL_GPUBuffer* createBuffer(Uint32 size,SDL_GPUBufferUsageFlags usage );

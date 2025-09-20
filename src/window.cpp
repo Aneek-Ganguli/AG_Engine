@@ -12,6 +12,9 @@
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtx/euler_angles.hpp>
 
+#include "shader_frag_spv.h"
+#include "shader_vert_spv.h"
+
 
 #include "Window.hpp"
 #include "VertexData.hpp"
@@ -34,7 +37,7 @@ Window::Window(const char* title,int width,int height):width(width),height(heigh
 	SDL_ShowWindow(window);
 
 	device = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV,true,NULL);
-	if(device == NULL){
+	if(device == nullptr){
 		printf("Error creating gpu device: %s: \n",SDL_GetError());
 	}
 
@@ -82,63 +85,65 @@ Window::Window(const char* title,int width,int height):width(width),height(heigh
 }
 
 SDL_GPUShader* Window::loadShader(
-	const char* shaderFilename,
+	void* code,
+	size_t codeSize,
 	Uint32 samplerCount,
 	Uint32 uniformBufferCount,
 	Uint32 storageBufferCount,
-	Uint32 storageTextureCount) {
+	Uint32 storageTextureCount,
+	SDL_GPUShaderStage shaderStage) {
 	// Auto-detect the shader stage from the file name for convenience
-	SDL_GPUShaderStage stage;
-	if (SDL_strstr(shaderFilename, ".vert"))
-	{
-		stage = SDL_GPU_SHADERSTAGE_VERTEX;
-	}
-	else if (SDL_strstr(shaderFilename, ".frag"))
-	{
-		stage = SDL_GPU_SHADERSTAGE_FRAGMENT;
-	}
-	else
-	{
-		SDL_Log("Invalid shader stage!");
-		return NULL;
-	}
-
-	char fullPath[256];
-	SDL_GPUShaderFormat backendFormats = SDL_GetGPUShaderFormats(device);
-	SDL_GPUShaderFormat format = SDL_GPU_SHADERFORMAT_INVALID;
-	const char *entrypoint;
-
-	if (backendFormats & SDL_GPU_SHADERFORMAT_SPIRV) {
-		SDL_snprintf(fullPath, sizeof(fullPath), "%s.spv", shaderFilename);
-		format = SDL_GPU_SHADERFORMAT_SPIRV;
-		entrypoint = "main";
-	} else if (backendFormats & SDL_GPU_SHADERFORMAT_MSL) {
-		SDL_snprintf(fullPath, sizeof(fullPath), "%s/%s.msl", "../bin/shader", shaderFilename);
-		format = SDL_GPU_SHADERFORMAT_MSL;
-		entrypoint = "main0";
-	} else if (backendFormats & SDL_GPU_SHADERFORMAT_DXIL) {
-		SDL_snprintf(fullPath, sizeof(fullPath), "%s/%s.dixil","../bin/shader", shaderFilename);
-		format = SDL_GPU_SHADERFORMAT_DXIL;
-		entrypoint = "main";
-	} else {
-		SDL_Log("%s", "Unrecognized backend shader format!");
-		return NULL;
-	}
-
-	size_t codeSize;
-	void* code = SDL_LoadFile(fullPath, &codeSize);
-	if (code == NULL)
-	{
-		SDL_Log("Failed to load shader from disk! %s", fullPath);
-		return NULL;
-	}
+	// SDL_GPUShaderStage stage;
+	// if (SDL_strstr(shaderFilename, ".vert"))
+	// {
+	// 	stage = SDL_GPU_SHADERSTAGE_VERTEX;
+	// }
+	// else if (SDL_strstr(shaderFilename, ".frag"))
+	// {
+	// 	stage = SDL_GPU_SHADERSTAGE_FRAGMENT;
+	// }
+	// else
+	// {
+	// 	SDL_Log("Invalid shader stage!");
+	// 	return NULL;
+	// }
+	//
+	// char fullPath[256];
+	// SDL_GPUShaderFormat backendFormats = SDL_GetGPUShaderFormats(device);
+	// SDL_GPUShaderFormat format = SDL_GPU_SHADERFORMAT_INVALID;
+	// const char *entrypoint;
+	//
+	// if (backendFormats & SDL_GPU_SHADERFORMAT_SPIRV) {
+	// 	SDL_snprintf(fullPath, sizeof(fullPath), "%s.spv", shaderFilename);
+	// 	format = SDL_GPU_SHADERFORMAT_SPIRV;
+	// 	entrypoint = "main";
+	// } else if (backendFormats & SDL_GPU_SHADERFORMAT_MSL) {
+	// 	SDL_snprintf(fullPath, sizeof(fullPath), "%s/%s.msl", "../bin/shader", shaderFilename);
+	// 	format = SDL_GPU_SHADERFORMAT_MSL;
+	// 	entrypoint = "main0";
+	// } else if (backendFormats & SDL_GPU_SHADERFORMAT_DXIL) {
+	// 	SDL_snprintf(fullPath, sizeof(fullPath), "%s/%s.dixil","../bin/shader", shaderFilename);
+	// 	format = SDL_GPU_SHADERFORMAT_DXIL;
+	// 	entrypoint = "main";
+	// } else {
+	// 	SDL_Log("%s", "Unrecognized backend shader format!");
+	// 	return NULL;
+	// }
+	//
+	// size_t codeSize;
+	// void* code = SDL_LoadFile(fullPath, &codeSize);
+	// if (code == NULL)
+	// {
+	// 	SDL_Log("Failed to load shader from disk! %s", fullPath);
+	// 	return NULL;
+	// }
 
 	SDL_GPUShaderCreateInfo shaderInfo{};
 	shaderInfo.code = static_cast<const Uint8*>(code);
 	shaderInfo.code_size = codeSize;
-	shaderInfo.entrypoint = entrypoint;
-	shaderInfo.format = format;
-	shaderInfo.stage = stage;
+	shaderInfo.entrypoint = "main";
+	shaderInfo.format = SDL_GPU_SHADERFORMAT_SPIRV;
+	shaderInfo.stage = shaderStage;
 	shaderInfo.num_samplers = samplerCount;
 	shaderInfo.num_uniform_buffers = uniformBufferCount;
 	shaderInfo.num_storage_buffers = storageBufferCount;
@@ -151,7 +156,7 @@ SDL_GPUShader* Window::loadShader(
 		return NULL;
 	}
 
-	SDL_free(code);
+	// SDL_free(code);
 	return shader;
 }
 
@@ -296,9 +301,11 @@ SDL_GPUBufferBinding Window::createBufferBinding(SDL_GPUBuffer* buffer){
 }
 
 void Window::createGraphicsPipeline() {
-	vertexShader = loadShader("res/shader/shader.vert", 0, 1, 0, 0);
+	vertexShader = loadShader(shader_vert_spv, shader_vert_spv_len,0, 1,
+	                          0, 0, SDL_GPU_SHADERSTAGE_VERTEX);
 
-	fragmentShader = loadShader("res/shader/shader.frag", 1, 0, 0, 0);
+	fragmentShader = loadShader(shader_frag_spv, shader_frag_spv_len, 1, 0,
+	                            0, 0, SDL_GPU_SHADERSTAGE_FRAGMENT);
 	SDL_GPUVertexBufferDescription vertexBufferDescription{};
 	vertexBufferDescription.slot = 0;
 	vertexBufferDescription.pitch = sizeof(VertexData);

@@ -124,14 +124,6 @@ std::vector<VertexData> loadModel(const std::string& path, std::vector<Uint32>& 
     return vertices;
 }
 
-
-
-// void createEntityWithModel(const char* modelFileName,const char* textureFileName,vec3 scale,vec3 position,Window* window, Entity* entity){
-    // std::vector<Uint32> indices;
-    // std::vector<VertexData> vertexData = loadModel(modelFileName,indices);
-    // createEntity(vertexData,indices,textureFileName,position,scale,window,entity);
-// }
-
 void Entity::destroy(Window* window){
     if (vertexBuffer) {
         SDL_ReleaseGPUBuffer(window->getGPUDevice(), vertexBuffer);
