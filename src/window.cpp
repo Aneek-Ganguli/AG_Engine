@@ -22,7 +22,7 @@
 using namespace AG_Engine;
 
 
-Window::Window(const char* title,int width,int height):width(width),height(height){
+Window::Window(const char* title,int width,int height,float p_fov):width(width),height(height){
 	if (!SDL_Init(SDL_INIT_VIDEO)) {
 		printf("SDL_Init failed: %s\n", SDL_GetError());
 	}
@@ -82,6 +82,86 @@ Window::Window(const char* title,int width,int height):width(width),height(heigh
 		cameraTarget,// center (what you’re looking at)
 		cameraUp     // up vector
 	);
+
+	vertexShader = loadShader(shader_vert_spv, shader_vert_spv_len,0, 1,
+	                          0, 0, SDL_GPU_SHADERSTAGE_VERTEX);
+
+	fragmentShader = loadShader(shader_frag_spv, shader_frag_spv_len, 1, 0,
+	                            0, 0, SDL_GPU_SHADERSTAGE_FRAGMENT);
+	SDL_GPUVertexBufferDescription vertexBufferDescription{};
+	vertexBufferDescription.slot = 0;
+	vertexBufferDescription.pitch = sizeof(VertexData);
+	vertexBufferDescription.input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX;
+
+	SDL_GPUVertexAttribute vertexAttributes[3]{};
+	vertexAttributes[0] = {
+		.location = 0,
+		.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
+		.offset = offsetof(struct VertexData,position),
+	};
+	vertexAttributes[1] = {
+		.location = 1,
+		.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
+		.offset = offsetof(struct VertexData,texCoord),
+	};
+	vertexAttributes[2] = {
+		.location = 2,
+		.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
+		.offset = offsetof(struct VertexData,color),
+	};
+
+	SDL_GPUVertexInputState vertexInput{};
+	vertexInput.num_vertex_buffers = 1;
+	vertexInput.num_vertex_attributes = 3;
+	vertexInput.vertex_buffer_descriptions = &vertexBufferDescription;
+    vertexInput.vertex_attributes =  vertexAttributes;
+
+	SDL_GPUColorTargetBlendState colorTargetBlend{};
+	colorTargetBlend.enable_blend = false;
+
+	if (device == NULL) {
+		std::cout << "Failed to create graphics pipeline." << SDL_GetError() << std::endl;
+	}
+
+	if (window == NULL) {
+		std::cout << "Failed to create graphics pipeline." << SDL_GetError() << std::endl;
+	}
+	SDL_GPUColorTargetDescription colorTargetDescription{};
+	colorTargetDescription.blend_state = colorTargetBlend;
+	colorTargetDescription.format = SDL_GetGPUSwapchainTextureFormat(device, window);
+
+	SDL_GPUGraphicsPipelineTargetInfo graphicsPipelineTargetInfo{};
+	graphicsPipelineTargetInfo.num_color_targets = 1;
+	graphicsPipelineTargetInfo.color_target_descriptions = &colorTargetDescription;
+	graphicsPipelineTargetInfo.has_depth_stencil_target = true;
+	graphicsPipelineTargetInfo.depth_stencil_format = SDL_GPU_TEXTUREFORMAT_D24_UNORM;
+
+
+	SDL_GPUDepthStencilState depthStencilState{};
+	depthStencilState.enable_depth_test = true;
+	depthStencilState.enable_depth_write = true;
+	depthStencilState.compare_op = SDL_GPU_COMPAREOP_LESS;
+
+	SDL_GPUGraphicsPipelineCreateInfo graphics_pipeline_create_info{};
+	graphics_pipeline_create_info.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
+	graphics_pipeline_create_info.target_info = graphicsPipelineTargetInfo;
+	graphics_pipeline_create_info.vertex_input_state = vertexInput;
+	graphics_pipeline_create_info.vertex_shader = vertexShader;
+	graphics_pipeline_create_info.fragment_shader = fragmentShader;
+	graphics_pipeline_create_info.depth_stencil_state = depthStencilState;
+
+    pipeline = SDL_CreateGPUGraphicsPipeline(device,&graphics_pipeline_create_info);
+    if(pipeline == NULL){
+        printf("Erro graphics pipeline :%s\n", SDL_GetError());
+	}
+
+	sampler = createGPUSampler();
+	// fov = Fov;
+	windowWidth = width;
+    windowHeight = height;
+	fov = p_fov;
+	projection = perspective(glm::radians(fov),(float)width/height,0.0001f,1000.0f);
+
 }
 
 SDL_GPUShader* Window::loadShader(
@@ -92,51 +172,7 @@ SDL_GPUShader* Window::loadShader(
 	Uint32 storageBufferCount,
 	Uint32 storageTextureCount,
 	SDL_GPUShaderStage shaderStage) {
-	// Auto-detect the shader stage from the file name for convenience
-	// SDL_GPUShaderStage stage;
-	// if (SDL_strstr(shaderFilename, ".vert"))
-	// {
-	// 	stage = SDL_GPU_SHADERSTAGE_VERTEX;
-	// }
-	// else if (SDL_strstr(shaderFilename, ".frag"))
-	// {
-	// 	stage = SDL_GPU_SHADERSTAGE_FRAGMENT;
-	// }
-	// else
-	// {
-	// 	SDL_Log("Invalid shader stage!");
-	// 	return NULL;
-	// }
-	//
-	// char fullPath[256];
-	// SDL_GPUShaderFormat backendFormats = SDL_GetGPUShaderFormats(device);
-	// SDL_GPUShaderFormat format = SDL_GPU_SHADERFORMAT_INVALID;
-	// const char *entrypoint;
-	//
-	// if (backendFormats & SDL_GPU_SHADERFORMAT_SPIRV) {
-	// 	SDL_snprintf(fullPath, sizeof(fullPath), "%s.spv", shaderFilename);
-	// 	format = SDL_GPU_SHADERFORMAT_SPIRV;
-	// 	entrypoint = "main";
-	// } else if (backendFormats & SDL_GPU_SHADERFORMAT_MSL) {
-	// 	SDL_snprintf(fullPath, sizeof(fullPath), "%s/%s.msl", "../bin/shader", shaderFilename);
-	// 	format = SDL_GPU_SHADERFORMAT_MSL;
-	// 	entrypoint = "main0";
-	// } else if (backendFormats & SDL_GPU_SHADERFORMAT_DXIL) {
-	// 	SDL_snprintf(fullPath, sizeof(fullPath), "%s/%s.dixil","../bin/shader", shaderFilename);
-	// 	format = SDL_GPU_SHADERFORMAT_DXIL;
-	// 	entrypoint = "main";
-	// } else {
-	// 	SDL_Log("%s", "Unrecognized backend shader format!");
-	// 	return NULL;
-	// }
-	//
-	// size_t codeSize;
-	// void* code = SDL_LoadFile(fullPath, &codeSize);
-	// if (code == NULL)
-	// {
-	// 	SDL_Log("Failed to load shader from disk! %s", fullPath);
-	// 	return NULL;
-	// }
+
 
 	SDL_GPUShaderCreateInfo shaderInfo{};
 	shaderInfo.code = static_cast<const Uint8*>(code);
@@ -167,9 +203,6 @@ void Window::startFrame() {
 	ImGui_ImplSDL3_NewFrame();
 	ImGui::NewFrame();
 
-
-	ImGui::ShowDemoWindow();
-
 	ImGui::Render();
 	drawData = ImGui::GetDrawData();
 
@@ -190,8 +223,6 @@ void Window::startFrame() {
 		cameraUp     // up vector
 	);
 
-	// Acquire command buffer and swapchain texture
-	// if (SDL_GetWindowFlags(window) != SDL_WINDOW_MINIMIZED) {
 
 	Uint32 flags = SDL_GetWindowFlags(window);
 
@@ -228,20 +259,12 @@ void Window::startFrame() {
 
 		SDL_BindGPUGraphicsPipeline(renderPass, pipeline);
 	}
-	// }
-	// else {
-	// 	std::cout << "Oh no theres a problem" << std::endl;
-	// }
+
 }
 
 
 void Window::endFrame(){
 
-	// ImGui::Render();
-	// ImDrawData* draw_data = ImGui::GetDrawData();
-	// ImGui_ImplSDLGPU3_PrepareDrawData(draw_data, commandBuffer);
-	//
-	// ImGui_ImplSDLGPU3_RenderDrawData(draw_data, commandBuffer, renderPass);
 	if (!(SDL_GetWindowFlags(window) & SDL_WINDOW_MINIMIZED)) {
 		//game
 		SDL_EndGPURenderPass(renderPass);
@@ -333,89 +356,6 @@ SDL_GPUBufferBinding Window::createBufferBinding(SDL_GPUBuffer* buffer){
     };
 }
 
-void Window::createGraphicsPipeline() {
-	vertexShader = loadShader(shader_vert_spv, shader_vert_spv_len,0, 1,
-	                          0, 0, SDL_GPU_SHADERSTAGE_VERTEX);
-
-	fragmentShader = loadShader(shader_frag_spv, shader_frag_spv_len, 1, 0,
-	                            0, 0, SDL_GPU_SHADERSTAGE_FRAGMENT);
-	SDL_GPUVertexBufferDescription vertexBufferDescription{};
-	vertexBufferDescription.slot = 0;
-	vertexBufferDescription.pitch = sizeof(VertexData);
-	vertexBufferDescription.input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX;
-
-	SDL_GPUVertexAttribute vertexAttributes[3]{};
-	vertexAttributes[0] = {
-		.location = 0,
-		.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
-		.offset = offsetof(struct VertexData,position),
-	};
-	vertexAttributes[1] = {
-		.location = 1,
-		.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
-		.offset = offsetof(struct VertexData,texCoord),
-	};
-	vertexAttributes[2] = {
-		.location = 2,
-		.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
-		.offset = offsetof(struct VertexData,color),
-	};
-
-	SDL_GPUVertexInputState vertexInput{};
-	vertexInput.num_vertex_buffers = 1;
-	vertexInput.num_vertex_attributes = 3;
-	vertexInput.vertex_buffer_descriptions = &vertexBufferDescription;
-    vertexInput.vertex_attributes =  vertexAttributes;
-
-	SDL_GPUColorTargetBlendState colorTargetBlend{};
-	colorTargetBlend.enable_blend = false;
-
-	if (device == NULL) {
-		std::cout << "Failed to create graphics pipeline." << SDL_GetError() << std::endl;
-	}
-
-	if (window == NULL) {
-		std::cout << "Failed to create graphics pipeline." << SDL_GetError() << std::endl;
-	}
-	SDL_GPUColorTargetDescription colorTargetDescription{};
-	colorTargetDescription.blend_state = colorTargetBlend;
-	colorTargetDescription.format = SDL_GetGPUSwapchainTextureFormat(device, window);
-
-	SDL_GPUGraphicsPipelineTargetInfo graphicsPipelineTargetInfo{};
-	graphicsPipelineTargetInfo.num_color_targets = 1;
-	graphicsPipelineTargetInfo.color_target_descriptions = &colorTargetDescription;
-	graphicsPipelineTargetInfo.has_depth_stencil_target = true;
-	graphicsPipelineTargetInfo.depth_stencil_format = SDL_GPU_TEXTUREFORMAT_D24_UNORM;
-
-
-	SDL_GPUDepthStencilState depthStencilState{};
-	depthStencilState.enable_depth_test = true;
-	depthStencilState.enable_depth_write = true;
-	depthStencilState.compare_op = SDL_GPU_COMPAREOP_LESS;
-
-	SDL_GPUGraphicsPipelineCreateInfo graphics_pipeline_create_info{};
-	graphics_pipeline_create_info.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
-	graphics_pipeline_create_info.target_info = graphicsPipelineTargetInfo;
-	graphics_pipeline_create_info.vertex_input_state = vertexInput;
-	graphics_pipeline_create_info.vertex_shader = vertexShader;
-	graphics_pipeline_create_info.fragment_shader = fragmentShader;
-	graphics_pipeline_create_info.depth_stencil_state = depthStencilState;
-
-    pipeline = SDL_CreateGPUGraphicsPipeline(device,&graphics_pipeline_create_info);
-    if(pipeline == NULL){
-        printf("Erro graphics pipeline :%s\n",SDL_GetError());
-    }
-
-    sampler = createGPUSampler();
-    // fov = Fov;
-    windowWidth = width;
-    windowHeight = height;
-
-	// print_mat4(projection);
-	std::cout << windowWidth << " " << windowHeight << std::endl;
-}
-
-
 
 SDL_GPUTexture* Window::createTexture(SDL_Surface* surface){
 	SDL_GPUTextureCreateInfo texture_create_info{};
@@ -485,14 +425,6 @@ void Window::cleanUp() {
 }
 
 
-void Window::createPerspective(float p_fov) {
-	fov = p_fov;
-
-	// glm_perspective(fov, (float)width/height, 0.1f, 1000.0f, P);
-	projection = perspective(glm::radians(fov),(float)width/height,0.0001f,1000.0f);
-}
-
-
 void Window::keyboadInput(SDL_Event& e,float deltaTime) {
 	vec2 move{};
 	if (e.type == SDL_EVENT_KEY_DOWN || e.type == SDL_EVENT_KEY_UP) {
@@ -543,17 +475,9 @@ void Window::keyboadInput(SDL_Event& e,float deltaTime) {
 	// SDL_WarpMouseInWindow(window, windowWidth/2, windowHeight/2);
 }
 
-void print_mat4(mat4 m) {
-	for (int i = 0; i < 4; i++) {
-		printf("| ");
-		for (int j = 0; j < 4; j++) {
-			printf("%8.3f ", m[i][j]);
-		}
-		printf("|\n");
-	}
-	printf("\n");
+void Window::ImGui() {
+	ImGui::ShowDemoWindow();
 }
-
 
 
 SDL_Surface* loadImage(const char* imageFilename, int desiredChannels){

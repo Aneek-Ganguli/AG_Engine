@@ -32,7 +32,7 @@ void Transform3D::translate(glm::mat4 view,glm::mat4 projection,float deltaTime)
     // scale
     M = glm::scale(M, scale);
     glm::vec3 rot0 = {0,0,0};
-    if (rotate != rot0 || rotateAngle != 0) {
+    if (rotate != rot0 || rotateAngle != 0.0f) {
         M = glm::rotate(M, rotateAngle * deltaTime, rotate);
     }
 

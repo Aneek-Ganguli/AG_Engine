@@ -24,7 +24,7 @@ namespace AG_Engine {
 
 	class Window{
 	public:
-		Window(const char* title,int width,int height);
+		Window(const char* title,int width,int height,float p_fov);
 		SDL_GPUShader* loadShader(void *code, size_t codeSize,
 		                          Uint32 samplerCount, Uint32 uniformBufferCount, Uint32 storageBufferCount, Uint32 storageTextureCount, SDL_GPUShaderStage
 		                          shaderStage);
@@ -35,8 +35,6 @@ namespace AG_Engine {
 		void endCopyPass();
 		SDL_GPUTransferBuffer* createTransferBuffer(Uint32 size);
 		void uploadBuffer(SDL_GPUTransferBufferLocation* transferBufferLocation, SDL_GPUBufferRegion* bufferRegion);
-		void createGraphicsPipeline();
-		void createPerspective(float p_fov);
 		SDL_GPUTexture* createTexture(SDL_Surface *surface);
 
 		void createDepthStencilTexture();
@@ -65,6 +63,8 @@ namespace AG_Engine {
 		vec2 mouseRel{};
 
 		SDL_Window* getWindow(){return window;}
+
+		static void ImGui();
 
 	private:
 		SDL_Window *window{};
