@@ -19,10 +19,10 @@ add_executable(AG_Engine
 
         src/main.cpp
         src/entity.cpp
-        src/component.cpp
+        src/transform3D.cpp
         src/vertexData.cpp
         src/window.cpp
-        src/component.cpp
+        src/texture.cpp
 
 
 )

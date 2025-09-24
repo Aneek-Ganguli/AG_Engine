@@ -39,7 +39,7 @@ namespace AG_Engine {
 
 		void createDepthStencilTexture();
 
-		SDL_GPUSampler* createGPUSampler();
+		SDL_GPUSampler* createSampler();
 		void uploadTexture(SDL_GPUTextureTransferInfo* textureTransferInfo,SDL_GPUTextureRegion* textureRegion);
 		void cleanUp();
 		SDL_GPUDevice* getGPUDevice(){return device;}

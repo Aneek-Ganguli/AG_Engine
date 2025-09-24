@@ -22,23 +22,7 @@ namespace AG_Engine {
         UBO transform{};
     };
 
-    struct Texture {
-    public:
-        void create(const char* p_fileName,Window* window);
-        void upload(Window* window);
-        void bind(Window* window,int slotNum,int numBinding);
-        void destroy(Window* window);
 
-    private:
-        SDL_GPUTexture *texture{};
-        // SDL_GPUTexture* depthTexture{};
-        SDL_GPUTransferBuffer *textureTransferBuffer{};
-        SDL_Surface* surface{};
-        void* textureTransferMem{};
-        SDL_GPUTextureTransferInfo textureTransferInfo{};
-        SDL_GPUTextureRegion textureRegion{};
-        SDL_GPUTextureSamplerBinding textureSamplerBinding{};
-    };
 }
 
 

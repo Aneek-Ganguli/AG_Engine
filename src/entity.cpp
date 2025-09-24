@@ -12,9 +12,11 @@
 using namespace AG_Engine;
 
 Entity::Entity(std::vector<VertexData> p_vertexData, std::vector<Uint32> p_indices, Transform3D p_transform ,
-    const char* p_fileName,Window* window) {
+    Texture& p_texture,Window* window) {
     // Reset everything
     // *e = (struct Entity){0};
+
+    window->startCopyPass();
 
     const Uint32 vertexSize = p_vertexData.size() * sizeof(VertexData);
     const Uint32 indexSize  = p_indices.size() * sizeof(Uint32);
@@ -54,7 +56,9 @@ Entity::Entity(std::vector<VertexData> p_vertexData, std::vector<Uint32> p_indic
 
     // --- Texture load + GPU texture ---
 
-    texture1.create(p_fileName, window);
+    // texture1.create(p_fileName, window);
+
+    texture1 = p_texture;
 
     window->uploadBuffer(&vertexTransferBufferLocation, &vertexBufferRegion);
     window->uploadBuffer(&indexTransferBufferLocation,  &indexBufferRegion);
@@ -66,6 +70,8 @@ Entity::Entity(std::vector<VertexData> p_vertexData, std::vector<Uint32> p_indic
     indexBufferBinding  =  window->createBufferBinding(indexBuffer);
 
     transform = p_transform;
+
+    window->endCopyPass();
 }
 
 
@@ -81,13 +87,24 @@ void Entity::draw(Window* window,float deltaTime) {
             transform.getUBOSize());
 
         texture1.bind(window, 0, 1); // → set=2, binding=0
-
-
-
         SDL_DrawGPUIndexedPrimitives(window->getRenderPass(), (Uint32)indiciesCount, 1, 0, 0, 0);
     }
 }
 
+void Entity::destroy(Window* window){
+    if (vertexBuffer) {
+        SDL_ReleaseGPUBuffer(window->getGPUDevice(), vertexBuffer);
+        vertexBuffer = NULL;
+    }
+    if (indexBuffer) {
+        SDL_ReleaseGPUBuffer(window->getGPUDevice(), indexBuffer);
+        indexBuffer = NULL;
+    }
+    if (transferBuffer) {
+        SDL_ReleaseGPUTransferBuffer(window->getGPUDevice(), transferBuffer);
+        transferBuffer = NULL;
+    }
+}
 
 std::vector<VertexData> loadModel(const std::string& path, std::vector<Uint32>& indices) {
     Assimp::Importer importer;
@@ -123,21 +140,3 @@ std::vector<VertexData> loadModel(const std::string& path, std::vector<Uint32>& 
 
     return vertices;
 }
-
-void Entity::destroy(Window* window){
-    if (vertexBuffer) {
-        SDL_ReleaseGPUBuffer(window->getGPUDevice(), vertexBuffer);
-        vertexBuffer = NULL;
-    }
-    if (indexBuffer) {
-        SDL_ReleaseGPUBuffer(window->getGPUDevice(), indexBuffer);
-        indexBuffer = NULL;
-    }
-    if (transferBuffer) {
-        SDL_ReleaseGPUTransferBuffer(window->getGPUDevice(), transferBuffer);
-        transferBuffer = NULL;
-    }
-    texture1.destroy(window);
-    // texture2.destroy(window);
-}
-

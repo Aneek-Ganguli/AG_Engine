@@ -155,12 +155,14 @@ Window::Window(const char* title,int width,int height,float p_fov):width(width),
         printf("Erro graphics pipeline :%s\n", SDL_GetError());
 	}
 
-	sampler = createGPUSampler();
+	sampler = createSampler();
 	// fov = Fov;
 	windowWidth = width;
     windowHeight = height;
 	fov = p_fov;
 	projection = perspective(glm::radians(fov),(float)width/height,0.0001f,1000.0f);
+
+	// startCopyPass();
 
 }
 
@@ -387,7 +389,7 @@ void Window::createDepthStencilTexture(){
 	depthTexture =  SDL_CreateGPUTexture(device, &texture_create_info);
 }
 
-SDL_GPUSampler* Window::createGPUSampler(){
+SDL_GPUSampler* Window::createSampler(){
 	SDL_GPUSamplerCreateInfo sampler_create_info{};
 	sampler_create_info.min_filter = SDL_GPU_FILTER_NEAREST;
 	sampler_create_info.mag_filter = SDL_GPU_FILTER_NEAREST;

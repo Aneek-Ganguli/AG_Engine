@@ -7,14 +7,15 @@
 
 #include "Window.hpp"
 #include "VertexData.hpp"
-#include "Component.hpp"
+#include "Transform3D.hpp"
+#include "Texture.hpp"
 
 
 namespace AG_Engine{
     class Entity{
     public:
-        Entity(std::vector<VertexData> p_vertexData, std::vector<Uint32> p_indices,Transform3D p_transform,
-            const char* p_fileName,Window* window);
+        Entity(std::vector<VertexData> p_vertexData, std::vector<Uint32> p_indices, Transform3D p_transform,
+               Texture& p_texture,Window *window);
 
         void draw(Window *window, float deltaTime);
 

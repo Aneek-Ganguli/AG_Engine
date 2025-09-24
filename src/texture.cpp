@@ -1,47 +1,10 @@
-#include <glm/glm.hpp>
-#include <glm/ext/matrix_transform.hpp>
+#include <SDL3/SDL.h>
+#include  <SDL3_image/SDL_image.h>
 
-#include "Component.hpp"
-#include "Component.hpp"
-#include "Component.hpp"
-#include "Component.hpp"
-#include "Component.hpp"
-#include "Window.hpp"
-#include "glm/ext/matrix_clip_space.hpp"
-
+#include "Texture.hpp"
 using namespace AG_Engine;
 
-Transform3D::Transform3D(vec3 p_position, vec3 p_rotation, vec3 p_scale,float p_rotateAngle)
-:position(p_position),rotate(p_rotation),scale(p_scale),rotateAngle(glm::radians(p_rotateAngle)),M(NULL),transform(NULL){};
-
-UBO* Transform3D::getUBOData() {
-    return &transform;
-}
-
-Uint32 Transform3D::getUBOSize() {
-    return sizeof(transform);
-}
-
-void Transform3D::translate(glm::mat4 view,glm::mat4 projection,float deltaTime) {
-
-    // P = glm::perspective(fov,(float)windowWidth/windowHeight,0.1f,1000.0f);
-    M = glm::mat4(1.0f);
-    // translate (glm::translate returns a new matrix)
-    // std::cout << position.x << position.y << position.z << std::endl
-    M = glm::translate(M, position);
-    // scale
-    M = glm::scale(M, scale);
-    glm::vec3 rot0 = {0,0,0};
-    if (rotate != rot0 || rotateAngle != 0.0f) {
-        M = glm::rotate(M, rotateAngle * deltaTime, rotate);
-    }
-
-    // multiply P * M -> MVP
-    transform.mvp = projection * view * M;
-    // print_mat4(M);
-}
-
-void Texture::create(const char *p_fileName,Window* window) {
+Texture::Texture(const char *p_fileName, Window *window) {
     surface = loadImage(p_fileName, 4);
     if (!surface) {
         printf("Failed to load texture image '%s'\n", p_fileName);
@@ -87,18 +50,29 @@ void Texture::create(const char *p_fileName,Window* window) {
 
     textureSamplerBinding.texture = texture;
     textureSamplerBinding.sampler = window->getSampler();
+    enable = true;
 }
 
 void Texture::upload(Window* window) {
-    if (textureTransferInfo.transfer_buffer == nullptr) {
-        std::cerr << "ERROR textureTransferInfo is NULL" << std::endl;
-    }
+    if (enable){
+        if (textureTransferInfo.transfer_buffer == nullptr) {
+            std::cerr << "ERROR textureTransferInfo is NULL" << std::endl;
+        }
 
-    window->uploadTexture(&textureTransferInfo, &textureRegion);
+        window->uploadTexture(&textureTransferInfo, &textureRegion);
+    }
+    else {
+        std::cout << "U need to set up texture" << std::endl;
+    }
 }
 
 void Texture::bind(Window* window,int slotNum,int numBinding) {
-    SDL_BindGPUFragmentSamplers(window->getRenderPass(), slotNum, &textureSamplerBinding, numBinding);
+    if (enable) {
+        SDL_BindGPUFragmentSamplers(window->getRenderPass(), slotNum, &textureSamplerBinding, numBinding);
+    }
+    else {
+        std::cout << "U need to set up texture" << std::endl;
+    }
 }
 
 void Texture::destroy(Window *window) {
