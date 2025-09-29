@@ -12,31 +12,31 @@
 using namespace AG_Engine;
 
 Entity::Entity(std::vector<VertexData> p_vertexData, std::vector<Uint32> p_indices, Transform3D p_transform ,
-    Texture& p_texture,Window* window) {
+    Texture& p_texture,Window* window) : texture1(p_texture) {
     // Reset everything
     // *e = (struct Entity){0};
+    // texture1 = Entity::Entity(p_texture.color);
 
     window->startCopyPass();
 
     const Uint32 vertexSize = p_vertexData.size() * sizeof(VertexData);
-    const Uint32 indexSize  = p_indices.size() * sizeof(Uint32);
+    const Uint32 indexSize = p_indices.size() * sizeof(Uint32);
 
     verticiesCount = p_vertexData.size();
-    indiciesCount  = p_indices.size();
+    indiciesCount = p_indices.size();
+    // texture1.enable = true;
 
-    if (!texture1.enable) {
-        for (int i = 0; i<verticiesCount ; i++) {
-            p_vertexData[i].color = {0,0,0};
+    if (p_texture.enable == false) {
+        // std::cout <<  texture1.enable  << std::endl;
+        for (int i = 0; i < verticiesCount; i++) {
+            p_vertexData[i].color = p_texture.color;
         }
     }
 
-    std::cout <<  texture1.enable  << std::endl;
-
-    // std::cout << "fsd"<< std::endl;
 
     // --- GPU buffers ---
     vertexBuffer = window->createBuffer(vertexSize, SDL_GPU_BUFFERUSAGE_VERTEX);
-    indexBuffer  = window->createBuffer(indexSize,  SDL_GPU_BUFFERUSAGE_INDEX);
+    indexBuffer = window->createBuffer(indexSize, SDL_GPU_BUFFERUSAGE_INDEX);
     if (!vertexBuffer || !indexBuffer) {
         printf("Error creating vertex/index buffer: %s\n", SDL_GetError());
         return;
@@ -55,34 +55,33 @@ Entity::Entity(std::vector<VertexData> p_vertexData, std::vector<Uint32> p_indic
         return;
     }
     memcpy(transferMem, p_vertexData.data(), vertexSize);
-    memcpy((char*)transferMem + vertexSize, p_indices.data(), indexSize);
+    memcpy((char *) transferMem + vertexSize, p_indices.data(), indexSize);
     SDL_UnmapGPUTransferBuffer(window->getGPUDevice(), transferBuffer);
 
-    vertexTransferBufferLocation =  window->createTransferBufferLocation(transferBuffer, 0);
-    indexTransferBufferLocation  = window->createTransferBufferLocation(transferBuffer, vertexSize);
+    vertexTransferBufferLocation = window->createTransferBufferLocation(transferBuffer, 0);
+    indexTransferBufferLocation = window->createTransferBufferLocation(transferBuffer, vertexSize);
 
     vertexBufferRegion = window->createBufferRegion(vertexSize, vertexBuffer);
-    indexBufferRegion  =  window->createBufferRegion(indexSize,  indexBuffer);
+    indexBufferRegion = window->createBufferRegion(indexSize, indexBuffer);
 
     // --- Texture load + GPU texture ---
 
     // texture1.create(p_fileName, window);
 
-    texture1 = p_texture;
+    // texture1 = p_texture;
 
     window->uploadBuffer(&vertexTransferBufferLocation, &vertexBufferRegion);
-    window->uploadBuffer(&indexTransferBufferLocation,  &indexBufferRegion);
+    window->uploadBuffer(&indexTransferBufferLocation, &indexBufferRegion);
     texture1.upload(window);
 
 
     // --- Bindings for draw ---
-    vertexBufferBinding =  window->createBufferBinding(vertexBuffer);
-    indexBufferBinding  =  window->createBufferBinding(indexBuffer);
+    vertexBufferBinding = window->createBufferBinding(vertexBuffer);
+    indexBufferBinding = window->createBufferBinding(indexBuffer);
 
     transform = p_transform;
 
     window->endCopyPass();
-
 }
 
 

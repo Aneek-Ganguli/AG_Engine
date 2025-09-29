@@ -61,9 +61,6 @@ void Texture::upload(Window* window) {
 
         window->uploadTexture(&textureTransferInfo, &textureRegion);
     }
-    else {
-        std::cout << "U need to set up texture" << std::endl;
-    }
 }
 
 void Texture::bind(Window* window,int slotNum,int numBinding) {
