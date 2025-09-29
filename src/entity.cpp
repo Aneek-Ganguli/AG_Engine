@@ -24,6 +24,16 @@ Entity::Entity(std::vector<VertexData> p_vertexData, std::vector<Uint32> p_indic
     verticiesCount = p_vertexData.size();
     indiciesCount  = p_indices.size();
 
+    if (!texture1.enable) {
+        for (int i = 0; i<verticiesCount ; i++) {
+            p_vertexData[i].color = {0,0,0};
+        }
+    }
+
+    std::cout <<  texture1.enable  << std::endl;
+
+    // std::cout << "fsd"<< std::endl;
+
     // --- GPU buffers ---
     vertexBuffer = window->createBuffer(vertexSize, SDL_GPU_BUFFERUSAGE_VERTEX);
     indexBuffer  = window->createBuffer(indexSize,  SDL_GPU_BUFFERUSAGE_INDEX);
@@ -72,12 +82,20 @@ Entity::Entity(std::vector<VertexData> p_vertexData, std::vector<Uint32> p_indic
     transform = p_transform;
 
     window->endCopyPass();
+
 }
 
 
 void Entity::draw(Window* window,float deltaTime) {
 
     if (!(SDL_GetWindowFlags(window->getWindow()) & SDL_WINDOW_MINIMIZED)){
+        if (texture1.enable) {
+            SDL_BindGPUGraphicsPipeline(window->getRenderPass(), window->getTexturePipline());
+        }
+        else {
+            SDL_BindGPUGraphicsPipeline(window->getRenderPass(), window->getShapePipeline());
+        }
+
         transform.translate(window->view, window->projection,deltaTime);
 
         SDL_BindGPUVertexBuffers(window->getRenderPass(), 0, &vertexBufferBinding, 1);
@@ -88,6 +106,7 @@ void Entity::draw(Window* window,float deltaTime) {
 
         texture1.bind(window, 0, 1); // → set=2, binding=0
         SDL_DrawGPUIndexedPrimitives(window->getRenderPass(), (Uint32)indiciesCount, 1, 0, 0, 0);
+
     }
 }
 

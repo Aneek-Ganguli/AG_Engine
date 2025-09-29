@@ -36,35 +36,32 @@ namespace AG_Engine {
 		SDL_GPUTransferBuffer* createTransferBuffer(Uint32 size);
 		void uploadBuffer(SDL_GPUTransferBufferLocation* transferBufferLocation, SDL_GPUBufferRegion* bufferRegion);
 		SDL_GPUTexture* createTexture(SDL_Surface *surface);
-
 		void createDepthStencilTexture();
-
 		SDL_GPUSampler* createSampler();
 		void uploadTexture(SDL_GPUTextureTransferInfo* textureTransferInfo,SDL_GPUTextureRegion* textureRegion);
 		void cleanUp();
-		SDL_GPUDevice* getGPUDevice(){return device;}
+
 		SDL_GPUTransferBufferLocation createTransferBufferLocation(SDL_GPUTransferBuffer* transferBuffer,Uint32 offset);
 		SDL_GPUBufferRegion createBufferRegion(Uint32 size,SDL_GPUBuffer* buffer);
 		SDL_GPUBufferBinding createBufferBinding(SDL_GPUBuffer* buffer);
+		void keyboadInput(SDL_Event &e, float deltaTime);
+		static void ImGui();
+
 		glm::mat4 projection;
 		glm::mat4 view = glm::mat4(1.0f);
-		SDL_GPUSampler* getSampler(){return sampler;};
-		SDL_GPURenderPass* getRenderPass(){return renderPass;};
-		SDL_GPUCommandBuffer* getCommandBuffer(){return commandBuffer;};
-
 		glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f, 3.0f);
 		glm::vec3 cameraTarget= glm::vec3(0.0f, 0.0f, 0.0f);
 		glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f, 0.0f);
-
-		void keyboadInput(SDL_Event &e, float deltaTime);
-
 		float moveSpeed = 3.0f,lookSensitivity = 0.5f, pitch{},yaw{};
-
 		vec2 mouseRel{};
 
+		SDL_GPUDevice* getGPUDevice(){return device;}
+		SDL_GPUSampler* getSampler(){return sampler;};
+		SDL_GPURenderPass* getRenderPass(){return renderPass;};
+		SDL_GPUCommandBuffer* getCommandBuffer(){return commandBuffer;};
 		SDL_Window* getWindow(){return window;}
-
-		static void ImGui();
+		SDL_GPUGraphicsPipeline* getTexturePipline(){return	texturePipeline;}
+		SDL_GPUGraphicsPipeline* getShapePipeline(){return shapePipeline;}
 
 	private:
 		SDL_Window *window{};
@@ -73,9 +70,19 @@ namespace AG_Engine {
 		SDL_GPUCommandBuffer *copyCommandBuffer{};
 		SDL_GPURenderPass *renderPass{};
 		SDL_GPUTexture *swapchainTexture{};
-		SDL_GPUGraphicsPipeline *pipeline{};
+
+		SDL_GPUGraphicsPipeline *texturePipeline{};
+		SDL_GPUGraphicsPipeline	*shapePipeline{};
+
+		//Universal Shader
 		SDL_GPUShader *vertexShader{};
-		SDL_GPUShader *fragmentShader{};
+
+		//Texture Shader
+		SDL_GPUShader *fragmentTextureShader{};
+
+		//Normal Texture
+		SDL_GPUShader *fragmentNormalShader{};
+
 		SDL_GPUCopyPass *copyPass{};
 		SDL_GPUSampler* sampler{};
 		int width,height{};

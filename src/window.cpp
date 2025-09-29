@@ -12,7 +12,8 @@
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtx/euler_angles.hpp>
 
-#include "shader_frag_spv.h"
+#include "shader_texture_frag_spv.h"
+#include "shader_shape_frag.h"
 #include "shader_vert_spv.h"
 
 
@@ -83,11 +84,16 @@ Window::Window(const char* title,int width,int height,float p_fov):width(width),
 		cameraUp     // up vector
 	);
 
-	vertexShader = loadShader(shader_vert_spv, shader_vert_spv_len,0, 1,
+	vertexShader = loadShader(shader_texture_vert_spv, shader_texture_vert_spv_len,0, 1,
 	                          0, 0, SDL_GPU_SHADERSTAGE_VERTEX);
 
-	fragmentShader = loadShader(shader_frag_spv, shader_frag_spv_len, 1, 0,
+	fragmentTextureShader = loadShader(shader_texture_frag_spv, shader_texture_frag_spv_len, 1, 0,
 	                            0, 0, SDL_GPU_SHADERSTAGE_FRAGMENT);
+
+	fragmentNormalShader = loadShader(shader_shape_frag_spv, shader_shape_frag_spv_len, 0, 0,
+								0, 0, SDL_GPU_SHADERSTAGE_FRAGMENT);
+
+
 	SDL_GPUVertexBufferDescription vertexBufferDescription{};
 	vertexBufferDescription.slot = 0;
 	vertexBufferDescription.pitch = sizeof(VertexData);
@@ -147,13 +153,20 @@ Window::Window(const char* title,int width,int height,float p_fov):width(width),
 	graphics_pipeline_create_info.target_info = graphicsPipelineTargetInfo;
 	graphics_pipeline_create_info.vertex_input_state = vertexInput;
 	graphics_pipeline_create_info.vertex_shader = vertexShader;
-	graphics_pipeline_create_info.fragment_shader = fragmentShader;
+	graphics_pipeline_create_info.fragment_shader = fragmentTextureShader;
 	graphics_pipeline_create_info.depth_stencil_state = depthStencilState;
 
-    pipeline = SDL_CreateGPUGraphicsPipeline(device,&graphics_pipeline_create_info);
-    if(pipeline == NULL){
+    texturePipeline = SDL_CreateGPUGraphicsPipeline(device,&graphics_pipeline_create_info);
+    if(texturePipeline == NULL){
         printf("Erro graphics pipeline :%s\n", SDL_GetError());
 	}
+
+	graphics_pipeline_create_info.fragment_shader = fragmentNormalShader;
+	shapePipeline = SDL_CreateGPUGraphicsPipeline(device,&graphics_pipeline_create_info);
+	if(shapePipeline == NULL){
+		printf("Erro graphics pipeline :%s\n", SDL_GetError());
+	}
+
 
 	sampler = createSampler();
 	// fov = Fov;
@@ -242,7 +255,7 @@ void Window::startFrame() {
 		colorTargetInfo.texture = swapchainTexture;
 		colorTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
 		colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
-		colorTargetInfo.clear_color = {0.0f, 1.0f, 1.0f, 1.0f};
+		colorTargetInfo.clear_color = {1.0f, 1.0f, 1.0f, 1.0f};
 
 		SDL_GPUDepthStencilTargetInfo depthStencilTargetInfo{};
 		depthStencilTargetInfo.texture = depthTexture;
@@ -254,12 +267,12 @@ void Window::startFrame() {
 		renderPass = SDL_BeginGPURenderPass(commandBuffer,
 										   &colorTargetInfo,
 										   1,
-										   &depthStencilTargetInfo);
+										    &depthStencilTargetInfo);
 		if (!renderPass) {
 			printf("Error beginning render pass: %s\n", SDL_GetError());
 		}
 
-		SDL_BindGPUGraphicsPipeline(renderPass, pipeline);
+
 	}
 
 }
@@ -416,9 +429,11 @@ void Window::cleanUp() {
 	depthTexture = nullptr;
 
 	SDL_ReleaseGPUShader(device, vertexShader);
-	SDL_ReleaseGPUShader(device, fragmentShader);
+	SDL_ReleaseGPUShader(device, fragmentTextureShader);
+	SDL_ReleaseGPUShader(device, fragmentNormalShader);
 
-	SDL_ReleaseGPUGraphicsPipeline(device, pipeline);
+	SDL_ReleaseGPUGraphicsPipeline(device, texturePipeline);
+	SDL_ReleaseGPUGraphicsPipeline(device, shapePipeline);
 	SDL_ReleaseGPUSampler(device, sampler);
 
 	SDL_DestroyGPUDevice(device);

@@ -3,3 +3,4 @@ cmake-build-debug/*
 include/glm/*
 .idea/*
 include/imgui/*
+texture.frag.spv

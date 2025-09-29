@@ -69,9 +69,7 @@ void Texture::upload(Window* window) {
 void Texture::bind(Window* window,int slotNum,int numBinding) {
     if (enable) {
         SDL_BindGPUFragmentSamplers(window->getRenderPass(), slotNum, &textureSamplerBinding, numBinding);
-    }
-    else {
-        std::cout << "U need to set up texture" << std::endl;
+        // std::cout  << SDL_GetError() << std::endl;
     }
 }
 
