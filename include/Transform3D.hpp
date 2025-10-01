@@ -15,6 +15,15 @@ namespace AG_Engine {
         UBO* getUBOData();
         Uint32 getUBOSize();
         void translate(glm::mat4 view, glm::mat4 projection,float deltaTime);
+
+        bool checkCollisionX(Transform3D otherObject);
+
+        bool checkCollisionY(Transform3D otherObject);
+
+        bool checkCollisionZ(Transform3D otherObject);
+
+        bool checkCollision(Transform3D otherObject);
+
     private:
         vec3 position{},scale{},rotate{};
         mat4 M{};
