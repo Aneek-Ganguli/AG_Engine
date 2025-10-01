@@ -36,45 +36,31 @@ void Transform3D::translate(glm::mat4  view,glm::mat4 projection,float deltaTime
     // print_mat4(M);
 }
 
-bool Transform3D::checkCollisionX(Transform3D otherObject) {
-    bool xCollision = otherObject.position.x >= position.x && otherObject.position.x <= position.x + scale.x;
-
-    if (xCollision) {
-        return true;
-    }
-    else {
-        return false;
-    }
+bool Transform3D::checkCollisionX(const Transform3D& otherObject) {
+    return checkCollision(otherObject) &&
+           (position.x < otherObject.position.x + otherObject.scale.x &&
+            position.x + scale.x > otherObject.position.x);
 }
 
-bool Transform3D::checkCollisionY(Transform3D otherObject) {
-    bool yCollision = otherObject.position.y >= position.y && otherObject.position.y <= position.y + scale.y;
-    if (yCollision) {
-        return true;
-    }
-    else {
-        return false;
-    }
+bool Transform3D::checkCollisionY(const Transform3D& otherObject) {
+    return checkCollision(otherObject) &&
+           (position.y < otherObject.position.y + otherObject.scale.y &&
+            position.y + scale.y > otherObject.position.y);
 }
 
-bool Transform3D::checkCollisionZ(Transform3D otherObject) {
-    bool zCollision = otherObject.position.z >= position.z && otherObject.position.z <= position.z + scale.z;
-    if (zCollision) {
-        return true;
-    }
-    else {
-        return false;
-    }
+bool Transform3D::checkCollisionZ(const Transform3D& otherObject) {
+    return checkCollision(otherObject) &&
+           (position.z < otherObject.position.z + otherObject.scale.z &&
+            position.z + scale.z > otherObject.position.z);
 }
 
-bool Transform3D::checkCollision(Transform3D otherObject) {
-    bool zCollision = otherObject.position.z >= position.z && otherObject.position.z <= position.z + scale.z;
-    bool yCollision = otherObject.position.y >= position.y && otherObject.position.y <= position.y + scale.y;
-    bool xCollision = otherObject.position.x >= position.x && otherObject.position.x <= position.x + scale.x;
-    if (xCollision||yCollision||zCollision) {
-        return true;
-    }
-    else {
-        return false;
-    }
+
+bool Transform3D::checkCollision(const Transform3D& otherObject) {
+    return (position.x < otherObject.position.x + otherObject.scale.x &&
+            position.x + scale.x > otherObject.position.x &&
+            position.y < otherObject.position.y + otherObject.scale.y &&
+            position.y + scale.y > otherObject.position.y &&
+            position.z < otherObject.position.z + otherObject.scale.z &&
+            position.z + scale.z > otherObject.position.z);
 }
+

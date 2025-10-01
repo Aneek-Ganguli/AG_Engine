@@ -16,13 +16,13 @@ namespace AG_Engine {
         Uint32 getUBOSize();
         void translate(glm::mat4 view, glm::mat4 projection,float deltaTime);
 
-        bool checkCollisionX(Transform3D otherObject);
+        bool checkCollisionX(const Transform3D& otherObject);
 
-        bool checkCollisionY(Transform3D otherObject);
+        bool checkCollisionY(const Transform3D& otherObject);
 
-        bool checkCollisionZ(Transform3D otherObject);
+        bool checkCollisionZ(const Transform3D& otherObject);
 
-        bool checkCollision(Transform3D otherObject);
+        bool checkCollision(const Transform3D& otherObject);
 
     private:
         vec3 position{},scale{},rotate{};
