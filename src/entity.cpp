@@ -11,7 +11,7 @@
 
 using namespace AG_Engine;
 
-Entity::Entity(std::vector<VertexData> p_vertexData, std::vector<Uint32> p_indices, Transform3D p_transform ,
+Entity::Entity(std::vector<VertexData> p_vertexData, std::vector<Uint32> p_indices, Transform p_transform ,
     Texture& p_texture,Window* window) : texture1(p_texture) {
     // Reset everything
     // *e = (struct Entity){0};

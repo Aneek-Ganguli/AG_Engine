@@ -6,18 +6,18 @@
 
 using namespace AG_Engine;
 
-Transform3D::Transform3D(vec3 p_position, vec3 p_rotation, vec3 p_scale,float p_rotateAngle)
+Transform::Transform(vec3 p_position, vec3 p_rotation, vec3 p_scale,float p_rotateAngle)
 :position(p_position),rotate(p_rotation),scale(p_scale),rotateAngle(glm::radians(p_rotateAngle)),M(NULL),transform(NULL){};
 
-UBO* Transform3D::getUBOData() {
+UBO* Transform::getUBOData() {
     return &transform;
 }
 
-Uint32 Transform3D::getUBOSize() {
+Uint32 Transform::getUBOSize() {
     return sizeof(transform);
 }
 
-void Transform3D::translate(glm::mat4  view,glm::mat4 projection,float deltaTime) {
+void Transform::translate(glm::mat4  view,glm::mat4 projection,float deltaTime) {
 
 
     M = glm::mat4(1.0f);
@@ -31,31 +31,39 @@ void Transform3D::translate(glm::mat4  view,glm::mat4 projection,float deltaTime
         M = glm::rotate(M, rotateAngle * deltaTime, rotate);
     }
 
-    // multiply P * M -> MVP
     transform.mvp = projection * view * M;
-    // print_mat4(M);
 }
 
-bool Transform3D::checkCollisionX(const Transform3D& otherObject) {
+Transform::Transform(vec2 p_position, vec2 p_rotation, vec2 p_scale, float p_rotateAngle) {
+    position.x = p_position.x;
+    position.y = p_position.y;
+    rotateAngle = p_rotateAngle;
+    scale.x = p_scale.x;
+    scale.y = p_scale.y;
+    rotateAngle = p_rotateAngle;
+}
+
+
+bool Transform::checkCollisionX(const Transform& otherObject) {
     return checkCollision(otherObject) &&
            (position.x < otherObject.position.x + otherObject.scale.x &&
             position.x + scale.x > otherObject.position.x);
 }
 
-bool Transform3D::checkCollisionY(const Transform3D& otherObject) {
+bool Transform::checkCollisionY(const Transform& otherObject) {
     return checkCollision(otherObject) &&
            (position.y < otherObject.position.y + otherObject.scale.y &&
             position.y + scale.y > otherObject.position.y);
 }
 
-bool Transform3D::checkCollisionZ(const Transform3D& otherObject) {
+bool Transform::checkCollisionZ(const Transform& otherObject) {
     return checkCollision(otherObject) &&
            (position.z < otherObject.position.z + otherObject.scale.z &&
             position.z + scale.z > otherObject.position.z);
 }
 
 
-bool Transform3D::checkCollision(const Transform3D& otherObject) {
+bool Transform::checkCollision(const Transform& otherObject) {
     return (position.x < otherObject.position.x + otherObject.scale.x &&
             position.x + scale.x > otherObject.position.x &&
             position.y < otherObject.position.y + otherObject.scale.y &&

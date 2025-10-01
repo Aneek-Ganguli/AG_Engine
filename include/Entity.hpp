@@ -14,7 +14,7 @@
 namespace AG_Engine{
     class Entity{
     public:
-        Entity(std::vector<VertexData> p_vertexData, std::vector<Uint32> p_indices, Transform3D p_transform,
+        Entity(std::vector<VertexData> p_vertexData, std::vector<Uint32> p_indices, Transform p_transform,
                Texture& p_texture,Window *window);
 
         void draw(Window *window, float deltaTime);
@@ -44,7 +44,7 @@ namespace AG_Engine{
 
 
         //Transform
-        Transform3D transform{};
+        Transform transform{};
 
         //Misc
         int verticiesCount{}, indiciesCount{};

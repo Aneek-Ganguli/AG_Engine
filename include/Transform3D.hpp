@@ -8,21 +8,23 @@
 
 using namespace glm;
 namespace AG_Engine {
-    struct  Transform3D{
+    struct  Transform{
     public:
-        Transform3D(vec3 p_position, vec3 p_rotation, vec3 p_scale,float p_rotateAngle);
-        Transform3D():position(NULL),M(NULL),scale(NULL),rotate(NULL),rotateAngle(NULL),transform(NULL){}
+        //Constructor
+        Transform(vec3 p_position, vec3 p_rotation, vec3 p_scale,float p_rotateAngle);
+        Transform(vec2 p_position, vec2 p_rotation, vec2 p_scale,float p_rotateAngle);
+        Transform():position(NULL),M(NULL),scale(NULL),rotate(NULL),rotateAngle(NULL),transform(NULL){}
+
+        //Transform Data
         UBO* getUBOData();
         Uint32 getUBOSize();
         void translate(glm::mat4 view, glm::mat4 projection,float deltaTime);
 
-        bool checkCollisionX(const Transform3D& otherObject);
-
-        bool checkCollisionY(const Transform3D& otherObject);
-
-        bool checkCollisionZ(const Transform3D& otherObject);
-
-        bool checkCollision(const Transform3D& otherObject);
+        //Collision
+        bool checkCollisionX(const Transform& otherObject);
+        bool checkCollisionY(const Transform& otherObject);
+        bool checkCollisionZ(const Transform& otherObject);
+        bool checkCollision(const Transform& otherObject);
 
     private:
         vec3 position{},scale{},rotate{};
