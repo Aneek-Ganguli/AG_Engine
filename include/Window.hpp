@@ -97,6 +97,3 @@ namespace AG_Engine {
 }
 
 SDL_Surface* loadImage(const char* imageFilename, int desiredChannels);
-
-
-void print_mat4(mat4 m);

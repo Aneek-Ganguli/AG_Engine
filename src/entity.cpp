@@ -29,7 +29,7 @@ Entity::Entity(std::vector<VertexData> p_vertexData, std::vector<Uint32> p_indic
     if (p_texture.enable == false) {
         // std::cout <<  texture1.enable  << std::endl;
         for (int i = 0; i < verticiesCount; i++) {
-            p_vertexData[i].color = p_texture.color;
+            texture1.color = p_texture.color;
         }
     }
 
@@ -103,6 +103,8 @@ void Entity::draw(Window* window,float deltaTime) {
         SDL_PushGPUVertexUniformData(window->getCommandBuffer(), 0, transform.getUBOData(),
             transform.getUBOSize());
 
+
+
         texture1.bind(window, 0, 1); // → set=2, binding=0
         SDL_DrawGPUIndexedPrimitives(window->getRenderPass(), (Uint32)indiciesCount, 1, 0, 0, 0);
 
@@ -143,7 +145,6 @@ std::vector<VertexData> loadModel(const std::string& path, std::vector<Uint32>& 
             VertexData vertex;
             vertex.position = { mesh->mVertices[j].x, mesh->mVertices[j].y, mesh->mVertices[j].z };
             vertex.texCoord = mesh->mTextureCoords[0] ? vec2{ mesh->mTextureCoords[0][j].x, mesh->mTextureCoords[0][j].y } : vec2{ 0.0f, 0.0f };
-            vertex.color = { 1.0f, 1.0f, 1.0f, 1.0f }; // Default white color
             vertices.push_back(vertex);
         }
 

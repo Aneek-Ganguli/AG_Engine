@@ -9,7 +9,7 @@ using namespace AG_Engine;
 Transform::Transform(vec3 p_position, vec3 p_rotation, vec3 p_scale,float p_rotateAngle)
 :position(p_position),rotate(p_rotation),scale(p_scale),rotateAngle(glm::radians(p_rotateAngle)),M(NULL),transform(NULL){};
 
-UBO* Transform::getUBOData() {
+struct UBO* Transform::getUBOData() {
     return &transform;
 }
 

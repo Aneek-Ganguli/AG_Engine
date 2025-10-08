@@ -9,12 +9,12 @@ namespace AG_Engine {
     struct Texture {
     public:
         Texture(const char* p_fileName,Window* window);
-        Texture(SDL_FColor p_color):color(p_color),enable(false){}
+        Texture(ColorUniform p_color):color(p_color),enable(false){}
         void upload(Window* window);
         void bind(Window* window,int slotNum,int numBinding);
         void destroy(Window* window);
         bool enable = false;
-        SDL_FColor color{};
+        ColorUniform color;
 
     private:
         SDL_GPUTexture *texture{};

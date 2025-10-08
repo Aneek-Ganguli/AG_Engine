@@ -10,12 +10,15 @@ namespace AG_Engine {
     struct VertexData {
         glm::vec3 position;
         glm::vec2 texCoord;
-        SDL_FColor color;
     };
 
-    typedef struct UBO {
+    struct UBO {
         glm::mat4 mvp;
-    } UBO;
+    };
+
+    struct ColorUniform {
+        alignas(16) SDL_FColor color;
+    };
 }
 
 

@@ -68,6 +68,9 @@ void Texture::bind(Window* window,int slotNum,int numBinding) {
         SDL_BindGPUFragmentSamplers(window->getRenderPass(), slotNum, &textureSamplerBinding, numBinding);
         // std::cout  << SDL_GetError() << std::endl;
     }
+
+    // SDL_PushGPUFragmentUniformData(window->getCommandBuffer(),3,&color,sizeof(color));
+    SDL_PushGPUVertexUniformData(window->getCommandBuffer(),2,&color,sizeof(color));
 }
 
 void Texture::destroy(Window *window) {

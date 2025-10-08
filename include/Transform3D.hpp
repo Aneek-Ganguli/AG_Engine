@@ -16,7 +16,7 @@ namespace AG_Engine {
         Transform():position(NULL),M(NULL),scale(NULL),rotate(NULL),rotateAngle(NULL),transform(NULL){}
 
         //Transform Data
-        UBO* getUBOData();
+        struct UBO* getUBOData();
         Uint32 getUBOSize();
         void translate(glm::mat4 view, glm::mat4 projection,float deltaTime);
 
@@ -30,7 +30,7 @@ namespace AG_Engine {
         vec3 position{},scale{},rotate{};
         mat4 M{};
         float rotateAngle{};
-        UBO transform{};
+        struct UBO transform{};
     };
 
 

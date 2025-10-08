@@ -12,9 +12,9 @@
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtx/euler_angles.hpp>
 
-#include "shader_texture_frag_spv.h"
-#include "shader_shape_frag.h"
-#include "shader_vert_spv.h"
+#include "shaderShape.h"
+#include "shaderTexture.h"
+#include "shaderVert.h"
 
 
 #include "Window.hpp"
@@ -84,13 +84,13 @@ Window::Window(const char* title,int width,int height,float p_fov):width(width),
 		cameraUp     // up vector
 	);
 
-	vertexShader = loadShader(shader_texture_vert_spv, shader_texture_vert_spv_len,0, 1,
+	vertexShader = loadShader(shader_vert_spv, shader_vert_spv_len,0, 2,
 	                          0, 0, SDL_GPU_SHADERSTAGE_VERTEX);
 
-	fragmentTextureShader = loadShader(shader_texture_frag_spv, shader_texture_frag_spv_len, 1, 0,
+	fragmentTextureShader = loadShader(texture_frag_spv, texture_frag_spv_len, 1, 0,
 	                            0, 0, SDL_GPU_SHADERSTAGE_FRAGMENT);
 
-	fragmentNormalShader = loadShader(shader_shape_frag_spv, shader_shape_frag_spv_len, 0, 0,
+	fragmentNormalShader = loadShader(shape_frag_spv, shape_frag_spv_len, 0, 0,
 								0, 0, SDL_GPU_SHADERSTAGE_FRAGMENT);
 
 
@@ -99,7 +99,7 @@ Window::Window(const char* title,int width,int height,float p_fov):width(width),
 	vertexBufferDescription.pitch = sizeof(VertexData);
 	vertexBufferDescription.input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX;
 
-	SDL_GPUVertexAttribute vertexAttributes[3]{};
+	SDL_GPUVertexAttribute vertexAttributes[2]{};
 	vertexAttributes[0] = {
 		.location = 0,
 		.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3,
@@ -110,15 +110,10 @@ Window::Window(const char* title,int width,int height,float p_fov):width(width),
 		.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
 		.offset = offsetof(struct VertexData,texCoord),
 	};
-	vertexAttributes[2] = {
-		.location = 2,
-		.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4,
-		.offset = offsetof(struct VertexData,color),
-	};
 
 	SDL_GPUVertexInputState vertexInput{};
 	vertexInput.num_vertex_buffers = 1;
-	vertexInput.num_vertex_attributes = 3;
+	vertexInput.num_vertex_attributes = 2;
 	vertexInput.vertex_buffer_descriptions = &vertexBufferDescription;
     vertexInput.vertex_attributes =  vertexAttributes;
 
