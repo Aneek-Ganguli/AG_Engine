@@ -51,6 +51,9 @@ Texture::Texture(const char *p_fileName, Window *window) {
     textureSamplerBinding.texture = texture;
     textureSamplerBinding.sampler = window->getSampler();
     enable = true;
+
+    // glm::vec4 color = glm::vec4(1,1,1,1);
+    color.color = {1,1,1,1};
 }
 
 void Texture::upload(Window* window) {
@@ -66,7 +69,6 @@ void Texture::upload(Window* window) {
 void Texture::bind(Window* window,int slotNum,int numBinding) {
     if (enable) {
         SDL_BindGPUFragmentSamplers(window->getRenderPass(), slotNum, &textureSamplerBinding, numBinding);
-        // std::cout  << SDL_GetError() << std::endl;
     }
 
     // SDL_PushGPUFragmentUniformData(window->getCommandBuffer(),3,&color,sizeof(color));

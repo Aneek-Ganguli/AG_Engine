@@ -40,7 +40,7 @@ namespace AG_Engine{
         void *transferMem{};
 
         //texture
-        Texture texture1;
+        Texture texture1{{}};
 
 
         //Transform

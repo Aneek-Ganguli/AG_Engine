@@ -14,7 +14,7 @@ namespace AG_Engine {
         void bind(Window* window,int slotNum,int numBinding);
         void destroy(Window* window);
         bool enable = false;
-        ColorUniform color;
+        ColorUniform color{};
 
     private:
         SDL_GPUTexture *texture{};

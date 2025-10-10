@@ -90,7 +90,7 @@ Window::Window(const char* title,int width,int height,float p_fov):width(width),
 	fragmentTextureShader = loadShader(texture_frag_spv, texture_frag_spv_len, 1, 0,
 	                            0, 0, SDL_GPU_SHADERSTAGE_FRAGMENT);
 
-	fragmentNormalShader = loadShader(shape_frag_spv, shape_frag_spv_len, 0, 0,
+	fragmentShapeTexture = loadShader(shape_frag_spv, shape_frag_spv_len, 0, 0,
 								0, 0, SDL_GPU_SHADERSTAGE_FRAGMENT);
 
 
@@ -156,7 +156,7 @@ Window::Window(const char* title,int width,int height,float p_fov):width(width),
         printf("Erro graphics pipeline :%s\n", SDL_GetError());
 	}
 
-	graphics_pipeline_create_info.fragment_shader = fragmentNormalShader;
+	graphics_pipeline_create_info.fragment_shader = fragmentShapeTexture;
 	shapePipeline = SDL_CreateGPUGraphicsPipeline(device,&graphics_pipeline_create_info);
 	if(shapePipeline == NULL){
 		printf("Erro graphics pipeline :%s\n", SDL_GetError());
@@ -425,7 +425,7 @@ void Window::cleanUp() {
 
 	SDL_ReleaseGPUShader(device, vertexShader);
 	SDL_ReleaseGPUShader(device, fragmentTextureShader);
-	SDL_ReleaseGPUShader(device, fragmentNormalShader);
+	SDL_ReleaseGPUShader(device, fragmentShapeTexture);
 
 	SDL_ReleaseGPUGraphicsPipeline(device, texturePipeline);
 	SDL_ReleaseGPUGraphicsPipeline(device, shapePipeline);

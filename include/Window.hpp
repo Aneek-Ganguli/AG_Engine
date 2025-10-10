@@ -81,7 +81,7 @@ namespace AG_Engine {
 		SDL_GPUShader *fragmentTextureShader{};
 
 		//Normal Texture
-		SDL_GPUShader *fragmentNormalShader{};
+		SDL_GPUShader *fragmentShapeTexture{};
 
 		SDL_GPUCopyPass *copyPass{};
 		SDL_GPUSampler* sampler{};
