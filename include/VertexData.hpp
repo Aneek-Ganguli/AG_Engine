@@ -8,16 +8,16 @@ using namespace glm;
 
 namespace AG_Engine {
     struct VertexData {
-        glm::vec3 position;
+        alignas(16) glm::vec3 position;
         glm::vec2 texCoord;
     };
 
     struct UBO {
-        glm::mat4 mvp;
+        alignas(16) glm::mat4 mvp;
     };
 
     struct ColorUniform {
-        alignas(16) SDL_FColor color;
+        alignas(16) glm::vec4 color;
     };
 }
 

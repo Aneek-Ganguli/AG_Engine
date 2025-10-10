@@ -9,7 +9,7 @@ namespace AG_Engine {
     struct Texture {
     public:
         Texture(const char* p_fileName,Window* window);
-        Texture(ColorUniform p_color):color(p_color),enable(false){}
+        Texture(glm::vec4 p_color):color({p_color}),enable(false){}
         void upload(Window* window);
         void bind(Window* window,int slotNum,int numBinding);
         void destroy(Window* window);

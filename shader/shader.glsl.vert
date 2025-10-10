@@ -4,7 +4,7 @@ layout(set=1,binding=0)uniform UBO{
     mat4 mvp;
 };
 
-layout(set=2,binding=0)uniform ColorUniform{
+layout(set=1,binding=1)uniform ColorUniform{
     vec4 color;
 };
 

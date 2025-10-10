@@ -102,10 +102,10 @@ void Entity::draw(Window* window,float deltaTime) {
 
         SDL_PushGPUVertexUniformData(window->getCommandBuffer(), 0, transform.getUBOData(),
             transform.getUBOSize());
+        SDL_PushGPUVertexUniformData(window->getCommandBuffer(),1,&texture1.color,sizeof(texture1.color));
 
 
-
-        texture1.bind(window, 0, 1); // → set=2, binding=0
+        texture1.bind(window, 0, 2); // → set=2, binding=0
         SDL_DrawGPUIndexedPrimitives(window->getRenderPass(), (Uint32)indiciesCount, 1, 0, 0, 0);
 
     }
