@@ -7,6 +7,7 @@
 // #define CGLTF_IMPLEMENTATION
 // #include <cgltf/cgltf.h>
 
+#include "Event.hpp"
 #include "VertexData.hpp"
 
 using namespace glm;
@@ -18,7 +19,7 @@ using namespace glm;
 namespace AG_Engine {
 	static const char* path = nullptr;
 
-	static struct ImGuiIO* io{};
+	// static struct ImGuiIO* io{};
 
 	static float windowHeight,windowWidth,fov;
 
@@ -44,7 +45,7 @@ namespace AG_Engine {
 		SDL_GPUTransferBufferLocation createTransferBufferLocation(SDL_GPUTransferBuffer* transferBuffer,Uint32 offset);
 		SDL_GPUBufferRegion createBufferRegion(Uint32 size,SDL_GPUBuffer* buffer);
 		SDL_GPUBufferBinding createBufferBinding(SDL_GPUBuffer* buffer);
-		void keyboadInput(SDL_Event &e, float deltaTime);
+		void keyboadInput(Event &event, float deltaTime);
 		static void ImGui();
 
 		glm::mat4 projection;

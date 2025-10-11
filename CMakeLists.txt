@@ -23,7 +23,7 @@ add_executable(AG_Engine
         src/vertexData.cpp
         src/window.cpp
         src/texture.cpp
-
+        src/event.cpp
 
 )
 

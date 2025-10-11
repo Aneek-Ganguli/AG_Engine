@@ -12,6 +12,7 @@
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtx/euler_angles.hpp>
 
+#include "Event.hpp"
 #include "shaderShape.h"
 #include "shaderTexture.h"
 #include "shaderVert.h"
@@ -437,8 +438,9 @@ void Window::cleanUp() {
 }
 
 
-void Window::keyboadInput(SDL_Event& e,float deltaTime) {
+void Window::keyboadInput(Event& event,float deltaTime) {
 	vec2 move{};
+#define e event.event
 	if (e.type == SDL_EVENT_KEY_DOWN || e.type == SDL_EVENT_KEY_UP) {
 		if (e.key.scancode == SDL_SCANCODE_W) {
 			move.y = 1;

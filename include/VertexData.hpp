@@ -21,6 +21,3 @@ namespace AG_Engine {
     };
 }
 
-
-
-// vec2* normalize(float x, float y);
