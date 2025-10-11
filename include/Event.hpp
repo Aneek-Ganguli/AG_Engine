@@ -9,7 +9,6 @@ namespace AG_Engine{
 
         bool pollEvent();
         void update();
-        Event();
         bool running = true;
 
     };

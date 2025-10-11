@@ -5,11 +5,6 @@
 
 using namespace AG_Engine;
 
-Event::Event() {
-
-}
-
-
 bool Event::pollEvent() {
     return SDL_PollEvent(&event);
 }
