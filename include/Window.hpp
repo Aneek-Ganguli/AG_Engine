@@ -31,22 +31,24 @@ namespace AG_Engine {
 		                          shaderStage);
 		void startFrame();
 		void endFrame();
-		SDL_GPUBuffer* createBuffer(Uint32 size,SDL_GPUBufferUsageFlags usage );
 		void startCopyPass();
 		void endCopyPass();
-		SDL_GPUTransferBuffer* createTransferBuffer(Uint32 size);
 		void uploadBuffer(SDL_GPUTransferBufferLocation* transferBufferLocation, SDL_GPUBufferRegion* bufferRegion);
-		SDL_GPUTexture* createTexture(SDL_Surface *surface);
 		void createDepthStencilTexture();
-		SDL_GPUSampler* createSampler();
 		void uploadTexture(SDL_GPUTextureTransferInfo* textureTransferInfo,SDL_GPUTextureRegion* textureRegion);
 		void cleanUp();
+		void keyboadInput(Event &event, float deltaTime);
 
+		void startImGui();
+		void endImGui();
+
+		SDL_GPUTransferBuffer* createTransferBuffer(Uint32 size);
+		SDL_GPUTexture* createTexture(SDL_Surface *surface);
+		SDL_GPUSampler* createSampler();
+		SDL_GPUBuffer* createBuffer(Uint32 size,SDL_GPUBufferUsageFlags usage );
 		SDL_GPUTransferBufferLocation createTransferBufferLocation(SDL_GPUTransferBuffer* transferBuffer,Uint32 offset);
 		SDL_GPUBufferRegion createBufferRegion(Uint32 size,SDL_GPUBuffer* buffer);
 		SDL_GPUBufferBinding createBufferBinding(SDL_GPUBuffer* buffer);
-		void keyboadInput(Event &event, float deltaTime);
-		static void ImGui();
 
 		glm::mat4 projection;
 		glm::mat4 view = glm::mat4(1.0f);
@@ -94,6 +96,7 @@ namespace AG_Engine {
 		//ImGui
 		ImDrawData* drawData{};
 		SDL_GPURenderPass* imguiRenderPass{};
+		bool imGuiEnabled = false;
 	};
 }
 

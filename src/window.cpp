@@ -210,12 +210,9 @@ SDL_GPUShader* Window::loadShader(
 
 
 void Window::startFrame() {
-	ImGui_ImplSDLGPU3_NewFrame();
-	ImGui_ImplSDL3_NewFrame();
-	ImGui::NewFrame();
 
-	ImGui::Render();
-	drawData = ImGui::GetDrawData();
+
+
 
 	// Get current window size
 	int newWidth, newHeight;
@@ -281,23 +278,25 @@ void Window::endFrame(){
 		SDL_EndGPURenderPass(renderPass);
 
 		//ImGui
-		SDL_GPUColorTargetInfo ImGuiColorTargetInfo{};
+		if (imGuiEnabled ){
+			SDL_GPUColorTargetInfo ImGuiColorTargetInfo{};
 
-		ImGuiColorTargetInfo.texture = swapchainTexture;
-		ImGuiColorTargetInfo.load_op = SDL_GPU_LOADOP_LOAD;
-		ImGuiColorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
+			ImGuiColorTargetInfo.texture = swapchainTexture;
+			ImGuiColorTargetInfo.load_op = SDL_GPU_LOADOP_LOAD;
+			ImGuiColorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
 
-		ImGui_ImplSDLGPU3_PrepareDrawData(drawData, commandBuffer);
+			ImGui_ImplSDLGPU3_PrepareDrawData(drawData, commandBuffer);
 
-		imguiRenderPass = SDL_BeginGPURenderPass(commandBuffer,&ImGuiColorTargetInfo,1,nullptr);
+			imguiRenderPass = SDL_BeginGPURenderPass(commandBuffer,&ImGuiColorTargetInfo,1,nullptr);
 
-		if (imguiRenderPass == nullptr) {
-			std::cerr << "Failed to begin imguiRenderPass" << SDL_GetError() << std::endl;
+			if (imguiRenderPass == nullptr) {
+				std::cerr << "Failed to begin imguiRenderPass" << SDL_GetError() << std::endl;
+			}
+
+			ImGui_ImplSDLGPU3_RenderDrawData(drawData,commandBuffer,imguiRenderPass);
+
+			SDL_EndGPURenderPass(imguiRenderPass);
 		}
-
-		ImGui_ImplSDLGPU3_RenderDrawData(drawData,commandBuffer,imguiRenderPass);
-
-		SDL_EndGPURenderPass(imguiRenderPass);
 
 		// DO NOT TOUCH
 		if(!SDL_SubmitGPUCommandBuffer(commandBuffer)) {
@@ -489,8 +488,17 @@ void Window::keyboadInput(Event& event,float deltaTime) {
 	// SDL_WarpMouseInWindow(window, windowWidth/2, windowHeight/2);
 }
 
-void Window::ImGui() {
-	ImGui::ShowDemoWindow();
+void Window::startImGui() {
+	ImGui_ImplSDLGPU3_NewFrame();
+	ImGui_ImplSDL3_NewFrame();
+	ImGui::NewFrame();
+}
+
+void Window::endImGui() {
+	ImGui::Render();
+	drawData = ImGui::GetDrawData();
+
+	imGuiEnabled = true;
 }
 
 

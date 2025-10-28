@@ -33,7 +33,6 @@ namespace AG_Engine {
         struct UBO transform{};
     };
 
-
 }
 
 
