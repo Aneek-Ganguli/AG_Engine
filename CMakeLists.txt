@@ -19,7 +19,7 @@ add_executable(AG_Engine
 
         src/main.cpp
         src/entity.cpp
-        src/transform3D.cpp
+        src/transform.cpp
         src/vertexData.cpp
         src/window.cpp
         src/texture.cpp

@@ -7,7 +7,7 @@
 
 #include "Window.hpp"
 #include "VertexData.hpp"
-#include "Transform3D.hpp"
+#include "Transform.hpp"
 #include "Texture.hpp"
 
 
@@ -20,6 +20,10 @@ namespace AG_Engine{
         void draw(Window *window, float deltaTime);
 
         void destroy(Window* window);
+
+        bool collision(Entity& other);
+
+        void createVericies();
 
     private:
 
@@ -42,9 +46,12 @@ namespace AG_Engine{
         //texture
         Texture texture1{{}};
 
+        std::vector<vec2> collisionVerticies;
 
         //Transform
         Transform transform{};
+
+        std::vector<VertexData> vertexData{};
 
         //Misc
         int verticiesCount{}, indiciesCount{};

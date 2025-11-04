@@ -22,6 +22,8 @@ Entity::Entity(std::vector<VertexData> p_vertexData, std::vector<Uint32> p_indic
     const Uint32 vertexSize = p_vertexData.size() * sizeof(VertexData);
     const Uint32 indexSize = p_indices.size() * sizeof(Uint32);
 
+    vertexData = p_vertexData;
+
     verticiesCount = p_vertexData.size();
     indiciesCount = p_indices.size();
     // texture1.enable = true;
@@ -125,6 +127,11 @@ void Entity::destroy(Window* window){
         transferBuffer = NULL;
     }
 }
+
+void Entity::createVericies() {
+
+}
+
 
 std::vector<VertexData> loadModel(const std::string& path, std::vector<Uint32>& indices) {
     Assimp::Importer importer;
