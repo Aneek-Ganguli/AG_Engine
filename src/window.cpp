@@ -248,7 +248,7 @@ void Window::startFrame() {
 		colorTargetInfo.texture = swapchainTexture;
 		colorTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
 		colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
-		colorTargetInfo.clear_color = {1.0f, 1.0f, 1.0f, 1.0f};
+		colorTargetInfo.clear_color = clearColor;
 
 		SDL_GPUDepthStencilTargetInfo depthStencilTargetInfo{};
 		depthStencilTargetInfo.texture = depthTexture;
@@ -531,3 +531,8 @@ SDL_Surface* loadImage(const char* imageFilename, int desiredChannels){
 
 	return result;
 }
+
+void Window::setClearFColor(SDL_FColor p_color) {
+	clearColor = p_color;
+}
+

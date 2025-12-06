@@ -42,6 +42,8 @@ namespace AG_Engine {
 		void startImGui();
 		void endImGui();
 
+		void setClearFColor(SDL_FColor p_color);
+
 		SDL_GPUTransferBuffer* createTransferBuffer(Uint32 size);
 		SDL_GPUTexture* createTexture(SDL_Surface *surface);
 		SDL_GPUSampler* createSampler();
@@ -97,6 +99,9 @@ namespace AG_Engine {
 		ImDrawData* drawData{};
 		SDL_GPURenderPass* imguiRenderPass{};
 		bool imGuiEnabled = false;
+
+		SDL_FColor clearColor{};
+
 	};
 }
 

@@ -5,6 +5,7 @@
 #include <assimp/scene.h>
 
 
+#include "ModelData.hpp"
 #include "Window.hpp"
 #include "VertexData.hpp"
 #include "Transform.hpp"
@@ -14,7 +15,7 @@
 namespace AG_Engine{
     class Entity{
     public:
-        Entity(std::vector<VertexData> p_vertexData, std::vector<Uint32> p_indices, Transform p_transform,
+        Entity(ModelData p_modelData, Transform p_transform,
                Texture& p_texture,Window *window);
 
         void draw(Window *window, float deltaTime);
@@ -66,6 +67,4 @@ namespace AG_Engine{
 
 // void destroyEntity(Entity* e,Window* window);
 
-// void setScale(Entity* e, vec3 scale);
-
-std::vector<AG_Engine::VertexData> loadModel(const std::string& path, std::vector<Uint32>& indices);
+// void setScale(Entity* e, vec3 scale)

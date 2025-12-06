@@ -7,25 +7,23 @@
 
 #include "Window.hpp"
 #include "Entity.hpp"
+#include "ModelData.hpp"
 #include "VertexData.hpp"
 
 using namespace AG_Engine;
 
-Entity::Entity(std::vector<VertexData> p_vertexData, std::vector<Uint32> p_indices, Transform p_transform ,
+Entity::Entity(ModelData p_modelData, Transform p_transform ,
     Texture& p_texture,Window* window) : texture1(p_texture) {
-    // Reset everything
-    // *e = (struct Entity){0};
-    // texture1 = Entity::Entity(p_texture.color);
-
     window->startCopyPass();
 
-    const Uint32 vertexSize = p_vertexData.size() * sizeof(VertexData);
-    const Uint32 indexSize = p_indices.size() * sizeof(Uint32);
+    const Uint32 vertexSize = p_modelData.vertexData.size() * sizeof(VertexData);
+    const Uint32 indexSize = p_modelData.indices.size() * sizeof(Uint32);
 
-    vertexData = p_vertexData;
 
-    verticiesCount = p_vertexData.size();
-    indiciesCount = p_indices.size();
+    vertexData = p_modelData.vertexData;
+
+    verticiesCount = p_modelData.vertexData.size();
+    indiciesCount = p_modelData.indices.size();
     // texture1.enable = true;
 
     if (p_texture.enable == false) {
@@ -56,8 +54,10 @@ Entity::Entity(std::vector<VertexData> p_vertexData, std::vector<Uint32> p_indic
         printf("Error mapping transfer buffer: %s\n", SDL_GetError());
         return;
     }
-    memcpy(transferMem, p_vertexData.data(), vertexSize);
-    memcpy((char *) transferMem + vertexSize, p_indices.data(), indexSize);
+
+
+    memcpy(transferMem, p_modelData.vertexData.data(), vertexSize);
+    memcpy((char *) transferMem + vertexSize, p_modelData.indices.data(), indexSize);
     SDL_UnmapGPUTransferBuffer(window->getGPUDevice(), transferBuffer);
 
     vertexTransferBufferLocation = window->createTransferBufferLocation(transferBuffer, 0);
@@ -126,10 +126,6 @@ void Entity::destroy(Window* window){
         SDL_ReleaseGPUTransferBuffer(window->getGPUDevice(), transferBuffer);
         transferBuffer = NULL;
     }
-}
-
-void Entity::createVericies() {
-
 }
 
 

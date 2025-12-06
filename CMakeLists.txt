@@ -24,6 +24,7 @@ add_executable(AG_Engine
         src/window.cpp
         src/texture.cpp
         src/event.cpp
+        src/modelData.cpp
 
 )
 
