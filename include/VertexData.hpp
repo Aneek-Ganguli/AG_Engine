@@ -9,7 +9,7 @@ using namespace glm;
 namespace AG_Engine {
     struct VertexData {
         alignas(16) glm::vec3 position;
-        glm::vec2 texCoord;
+        glm::vec2 texCoord[8];
     };
 
     struct UBO {

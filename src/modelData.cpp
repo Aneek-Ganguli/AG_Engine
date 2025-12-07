@@ -17,17 +17,31 @@ ModelData loadModel(const std::string& path) {
     std::vector<Uint32> indices;
 
     for (size_t i = 0; i < scene->mNumMeshes; ++i) {
-        const auto& mesh = scene->mMeshes[i];
+        const aiMesh* mesh = scene->mMeshes[i];
 
-        // Process vertices
         for (size_t j = 0; j < mesh->mNumVertices; ++j) {
             AG_Engine::VertexData vertex;
-            vertex.position = { mesh->mVertices[j].x, mesh->mVertices[j].y, mesh->mVertices[j].z };
-            vertex.texCoord = mesh->mTextureCoords[0] ? vec2{ mesh->mTextureCoords[0][j].x, mesh->mTextureCoords[0][j].y } : vec2{ 0.0f, 0.0f };
+
+            vertex.position = {
+                mesh->mVertices[j].x,
+                mesh->mVertices[j].y,
+                mesh->mVertices[j].z
+            };
+
+            for (int channel = 0; channel < AI_MAX_NUMBER_OF_TEXTURECOORDS; ++channel) {
+                if (mesh->mTextureCoords[channel]) {
+                    vertex.texCoord[channel] = {
+                        mesh->mTextureCoords[channel][j].x,
+                        mesh->mTextureCoords[channel][j].y
+                    };
+                } else {
+                    vertex.texCoord[channel] = {0.0f, 0.0f};
+                }
+            }
+
             vertices.push_back(vertex);
         }
 
-        // Process indices
         for (size_t j = 0; j < mesh->mNumFaces; ++j) {
             const auto& face = mesh->mFaces[j];
             for (size_t k = 0; k < face.mNumIndices; ++k) {
@@ -35,6 +49,5 @@ ModelData loadModel(const std::string& path) {
             }
         }
     }
-
     return {.vertexData = vertices,.indices = indices};
 }

@@ -88,7 +88,7 @@ Window::Window(const char* title,int width,int height,float p_fov):width(width),
 	vertexShader = loadShader(shader_vert_spv, shader_vert_spv_len,0, 2,
 	                          0, 0, SDL_GPU_SHADERSTAGE_VERTEX);
 
-	fragmentTextureShader = loadShader(texture_frag_spv, texture_frag_spv_len, 1, 0,
+	fragmentTextureShader1 = loadShader(texture_frag_spv, texture_frag_spv_len, 1, 0,
 	                            0, 0, SDL_GPU_SHADERSTAGE_FRAGMENT);
 
 	fragmentShapeTexture = loadShader(shape_frag_spv, shape_frag_spv_len, 0, 0,
@@ -109,7 +109,7 @@ Window::Window(const char* title,int width,int height,float p_fov):width(width),
 	vertexAttributes[1] = {
 		.location = 1,
 		.format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT2,
-		.offset = offsetof(struct VertexData,texCoord),
+		.offset = offsetof(struct VertexData,texCoord[0]),
 	};
 
 	SDL_GPUVertexInputState vertexInput{};
@@ -149,7 +149,7 @@ Window::Window(const char* title,int width,int height,float p_fov):width(width),
 	graphics_pipeline_create_info.target_info = graphicsPipelineTargetInfo;
 	graphics_pipeline_create_info.vertex_input_state = vertexInput;
 	graphics_pipeline_create_info.vertex_shader = vertexShader;
-	graphics_pipeline_create_info.fragment_shader = fragmentTextureShader;
+	graphics_pipeline_create_info.fragment_shader = fragmentTextureShader1;
 	graphics_pipeline_create_info.depth_stencil_state = depthStencilState;
 
     texturePipeline = SDL_CreateGPUGraphicsPipeline(device,&graphics_pipeline_create_info);
@@ -424,7 +424,7 @@ void Window::cleanUp() {
 	depthTexture = nullptr;
 
 	SDL_ReleaseGPUShader(device, vertexShader);
-	SDL_ReleaseGPUShader(device, fragmentTextureShader);
+	SDL_ReleaseGPUShader(device, fragmentTextureShader1);
 	SDL_ReleaseGPUShader(device, fragmentShapeTexture);
 
 	SDL_ReleaseGPUGraphicsPipeline(device, texturePipeline);
@@ -532,7 +532,7 @@ SDL_Surface* loadImage(const char* imageFilename, int desiredChannels){
 	return result;
 }
 
-void Window::setClearFColor(SDL_FColor p_color) {
+void Window::setClearColor(SDL_FColor p_color) {
 	clearColor = p_color;
 }
 

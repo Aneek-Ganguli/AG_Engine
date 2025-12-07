@@ -27,10 +27,7 @@ Entity::Entity(ModelData p_modelData, Transform p_transform ,
     // texture1.enable = true;
 
     if (p_texture.enable == false) {
-        // std::cout <<  texture1.enable  << std::endl;
-        for (int i = 0; i < verticiesCount; i++) {
-            texture1.color = p_texture.color;
-        }
+        texture1 = p_texture;
     }
 
 
@@ -55,6 +52,14 @@ Entity::Entity(ModelData p_modelData, Transform p_transform ,
         return;
     }
 
+
+    if (p_modelData.vertexData.data() == NULL) {
+        throw std::runtime_error("Vertex Data is NULL");
+    }
+
+    if (p_modelData.indices.data() == NULL) {
+        throw std::runtime_error("Indices Data is NULL");
+    }
 
     memcpy(transferMem, p_modelData.vertexData.data(), vertexSize);
     memcpy((char *) transferMem + vertexSize, p_modelData.indices.data(), indexSize);
@@ -141,24 +146,32 @@ std::vector<VertexData> loadModel(const std::string& path, std::vector<Uint32>& 
     std::vector<VertexData> vertices;
 
     for (size_t i = 0; i < scene->mNumMeshes; ++i) {
-        const auto& mesh = scene->mMeshes[i];
+        const aiMesh* mesh = scene->mMeshes[i];
 
-        // Process vertices
         for (size_t j = 0; j < mesh->mNumVertices; ++j) {
-            VertexData vertex;
-            vertex.position = { mesh->mVertices[j].x, mesh->mVertices[j].y, mesh->mVertices[j].z };
-            vertex.texCoord = mesh->mTextureCoords[0] ? vec2{ mesh->mTextureCoords[0][j].x, mesh->mTextureCoords[0][j].y } : vec2{ 0.0f, 0.0f };
+            AG_Engine::VertexData vertex;
+
+            vertex.position = {
+                mesh->mVertices[j].x,
+                mesh->mVertices[j].y,
+                mesh->mVertices[j].z
+            };
+
+            for (int channel = 0; channel < AI_MAX_NUMBER_OF_TEXTURECOORDS; ++channel) {
+                if (mesh->mTextureCoords[channel]) {
+                    vertex.texCoord[channel] = {
+                        mesh->mTextureCoords[channel][j].x,
+                        mesh->mTextureCoords[channel][j].y
+                    };
+                } else {
+                    vertex.texCoord[channel] = {0.0f, 0.0f};
+                }
+            }
+
             vertices.push_back(vertex);
         }
-
-        // Process indices
-        for (size_t j = 0; j < mesh->mNumFaces; ++j) {
-            const auto& face = mesh->mFaces[j];
-            for (size_t k = 0; k < face.mNumIndices; ++k) {
-                indices.push_back(face.mIndices[k]);
-            }
-        }
     }
+
 
     return vertices;
 }

@@ -22,10 +22,6 @@ namespace AG_Engine{
 
         void destroy(Window* window);
 
-        bool collision(Entity& other);
-
-        void createVericies();
-
     private:
 
         //vertex
@@ -59,12 +55,3 @@ namespace AG_Engine{
     } ;
 }
 
-// void createEntity(std::vector<VertexData> vertexData, std::vector<Uint32> indicies, const char* fileName,
-    // vec3 position,vec3 scale,struct Window *window, struct Entity *e);
-
-
-// void drawEntity(struct Window *window, Entity *e);
-
-// void destroyEntity(Entity* e,Window* window);
-
-// void setScale(Entity* e, vec3 scale)

@@ -42,7 +42,7 @@ namespace AG_Engine {
 		void startImGui();
 		void endImGui();
 
-		void setClearFColor(SDL_FColor p_color);
+		void setClearColor(SDL_FColor p_color);
 
 		SDL_GPUTransferBuffer* createTransferBuffer(Uint32 size);
 		SDL_GPUTexture* createTexture(SDL_Surface *surface);
@@ -83,7 +83,14 @@ namespace AG_Engine {
 		SDL_GPUShader *vertexShader{};
 
 		//Texture Shader
-		SDL_GPUShader *fragmentTextureShader{};
+		SDL_GPUShader *fragmentTextureShader1{};
+		SDL_GPUShader *fragmentTextureShader2{};
+		SDL_GPUShader *fragmentTextureShader3{};
+		SDL_GPUShader *fragmentTextureShader4{};
+		SDL_GPUShader *fragmentTextureShader5{};
+		SDL_GPUShader *fragmentTextureShader6{};
+		SDL_GPUShader *fragmentTextureShader7{};
+		SDL_GPUShader *fragmentTextureShader8{};
 
 		//Normal Texture
 		SDL_GPUShader *fragmentShapeTexture{};
