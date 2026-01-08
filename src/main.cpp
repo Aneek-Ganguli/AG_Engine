@@ -10,6 +10,8 @@ int main() {
 
     while (window.isWindowOpen()) {
         glfwPollEvents();
+
+        window.newFrame();
     }
 
     window.cleanUp();

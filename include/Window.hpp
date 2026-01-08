@@ -4,7 +4,6 @@
 #include  <vulkan/vulkan.hpp>
 
 #include "Logger.hpp"
-#include "Device.hpp"
 
 #ifdef DEBUG
     static bool debug = true;
@@ -21,15 +20,47 @@ public:
     bool isWindowOpen();
     void cleanUp();
 
+    void newFrame();
+
 private:
     const char* title;
     int width, height;
     GLFWwindow* window{};
     Logger logger;
     vk::Instance instance{};
-    Device device;
 
     vk::SurfaceKHR surface{};
 
+    uint32_t imageCount{};
+
+    vk::Fence fence{};
+
+    vk::SubmitInfo submitInfo{};
+
+    vk::PipelineStageFlags pipelineStageFlags = vk::PipelineStageFlagBits::eColorAttachmentOutput ;
+
+    vk::PresentInfoKHR presentInfo{};
+
     void createGLFWwindow();
+    void createDevice();
+    void createSwapchain();
+    void createFence();
+
+    uint32_t physicalDeviceCount{};
+    vk::PhysicalDeviceProperties properties{};
+    vk::PhysicalDevice physicalDevice{};
+    vk::Device device{};
+    vk::Queue queue{};
+
+    vk::Semaphore acquireSemaphore{};
+    vk::Semaphore releaseSemaphore{};
+
+    vk::SwapchainKHR handle{};
+    std::vector<vk::Image> images{};
+    std::vector<vk::Semaphore> imageReadySemaphore{};
+
+    vk::CommandBuffer commandBuffer{};
+    vk::CommandPool commandPool{};
+
+    uint32_t queueFamilyIndex;
 };

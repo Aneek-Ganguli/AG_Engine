@@ -62,6 +62,99 @@ bool supported(std::vector<const char*>& p_extensions,std::vector<const char *>&
     return true;
 }
 
+void Window::createSwapchain() {
+        vk::SurfaceCapabilitiesKHR surfaceCaps = physicalDevice.getSurfaceCapabilitiesKHR(surface);
+
+    // Image count
+    uint32_t imageCount = std::max(3u, surfaceCaps.minImageCount);
+    if (surfaceCaps.maxImageCount > 0) {
+        imageCount = std::min(imageCount, surfaceCaps.maxImageCount);
+    }
+
+    // Surface formats
+    std::vector<vk::SurfaceFormatKHR> surfaceFormats =
+        physicalDevice.getSurfaceFormatsKHR(surface);
+
+    // Pick preferred format
+    vk::SurfaceFormatKHR surfaceFormat = surfaceFormats.front();
+    for (const auto& candidate : surfaceFormats) {
+        if (candidate.format == vk::Format::eB8G8R8A8Srgb &&
+            candidate.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear) {
+            surfaceFormat = candidate;
+            break;
+            }
+    }
+
+    // Framebuffer size
+    int width = 0, height = 0;
+    glfwGetFramebufferSize(window, &width, &height);
+
+    auto presentMode = physicalDevice.getSurfacePresentModesKHR(surface);
+    if (presentMode.empty()) {
+        throw std::runtime_error("No present mode found!");
+    }
+
+    vk::PresentModeKHR actualPresentMode = vk::PresentModeKHR::eFifo;
+    for (auto e : presentMode) {
+        if (e == vk::PresentModeKHR::eMailbox) {
+            actualPresentMode = e;
+            break;
+        }
+    }
+
+
+    // Swapchain create info
+    vk::SwapchainCreateInfoKHR swapchainCI{};
+    swapchainCI.surface = surface;
+    swapchainCI.minImageCount = imageCount;
+    swapchainCI.imageFormat = surfaceFormat.format;
+    swapchainCI.imageColorSpace = surfaceFormat.colorSpace;
+    swapchainCI.imageExtent = vk::Extent2D{
+        static_cast<uint32_t>(width),
+        static_cast<uint32_t>(height)
+    };
+    swapchainCI.imageArrayLayers = 1;
+    swapchainCI.imageUsage = vk::ImageUsageFlagBits::eColorAttachment;
+    swapchainCI.preTransform = surfaceCaps.currentTransform;
+    swapchainCI.compositeAlpha = vk::CompositeAlphaFlagBitsKHR::eOpaque;
+    swapchainCI.presentMode = actualPresentMode;
+    swapchainCI.clipped = VK_TRUE;
+    swapchainCI.oldSwapchain = VK_NULL_HANDLE;
+
+
+
+    // Create swapchain
+    handle = device.createSwapchainKHR(swapchainCI);
+    if (handle == nullptr) {
+        throw std::runtime_error("Failed to create swapchain!");
+    }
+
+    // device.getSwapchainImagesKHR(&handle,);
+
+    images = device.getSwapchainImagesKHR(handle);
+
+    vk::SemaphoreCreateInfo semaphoreCreateInfo{};
+    semaphoreCreateInfo.sType = vk::StructureType::eSemaphoreCreateInfo;
+
+    imageReadySemaphore.resize(imageCount);
+
+    vk::SemaphoreCreateInfo semaphoreCI{};
+
+    for (auto& semaphore : imageReadySemaphore) {
+        semaphore = device.createSemaphore(semaphoreCI);
+    }
+}
+
+
+void Window::createFence() {
+    vk::FenceCreateInfo fenceCreateInfo{};
+    fenceCreateInfo.sType = vk::StructureType::eFenceCreateInfo;
+    fenceCreateInfo.flags = vk::FenceCreateFlagBits::eSignaled;
+    if(device.createFence(&fenceCreateInfo,nullptr,&fence)!=vk::Result::eSuccess) {
+        throw std::runtime_error("Failed to create fence!");
+    }
+}
+
 
 Window::Window(const char* p_title,int p_width,int p_height):title(p_title),width(p_width),height(p_height),logger() {
 
@@ -116,7 +209,17 @@ Window::Window(const char* p_title,int p_width,int p_height):title(p_title),widt
 
     logger = Logger(instance);
 
-    device = Device(instance,surface,window);
+
+    vk::SemaphoreCreateInfo semaphoreCreateInfo{};
+    semaphoreCreateInfo.sType = vk::StructureType::eSemaphoreCreateInfo;
+
+
+
+    createDevice();
+
+    createSwapchain();
+
+    createFence();
 
 }
 
@@ -125,9 +228,20 @@ bool Window::isWindowOpen() {
 }
 
 void Window::cleanUp() {
+
+    images = {};
+
+    for (auto semaphore : imageReadySemaphore) {
+        device.destroySemaphore(semaphore);
+    }
+
+    device.destroySemaphore(acquireSemaphore);
+
+
     logger.cleanUp(instance);
 
-    device.destroy(instance);
+    device.destroySwapchainKHR(handle);
+    device.destroy();
 
     instance.destroySurfaceKHR(surface);
 
@@ -137,6 +251,8 @@ void Window::cleanUp() {
     glfwDestroyWindow(window);
 
     glfwTerminate();
+
+
 }
 
 void Window::createGLFWwindow() {
@@ -153,5 +269,119 @@ void Window::createGLFWwindow() {
     window = glfwCreateWindow(width,height,title,nullptr,nullptr);
 
     assert(window && "GLFW window creation failed!");
+
+
+
 }
 
+void Window::createDevice() {
+     auto physicalDevices = instance.enumeratePhysicalDevices();
+    if (physicalDevices.empty()) {
+        throw std::runtime_error("No GPUs found!");
+    }
+
+    bool found = false;
+
+    for (const auto& candidate : physicalDevices) {
+        auto queueFamilies = candidate.getQueueFamilyProperties();
+
+        for (uint32_t i = 0; i < queueFamilies.size(); ++i) {
+            bool supportsGraphics =
+                static_cast<bool>(queueFamilies[i].queueFlags & vk::QueueFlagBits::eGraphics);
+
+            bool supportsPresent =
+                candidate.getSurfaceSupportKHR(i, surface);
+
+            if (supportsGraphics && supportsPresent) {
+                physicalDevice = candidate;
+                queueFamilyIndex = i;
+                found = true;
+                break;
+            }
+        }
+
+        if (found) break;
+    }
+
+    if (!found) {
+        throw std::runtime_error("No suitable GPU found!");
+    }
+
+
+    float queuePriority = 1.0f;
+
+    const char* extensions[] = {
+        vk::KHRSwapchainExtensionName
+    };
+
+    vk::DeviceQueueCreateInfo queueCreateInfo{};
+    queueCreateInfo.queueFamilyIndex = queueFamilyIndex;
+    queueCreateInfo.queueCount = 1;
+    queueCreateInfo.pQueuePriorities = &queuePriority;
+
+    vk::DeviceCreateInfo deviceCreateInfo{};
+    deviceCreateInfo.queueCreateInfoCount = 1;
+    deviceCreateInfo.pQueueCreateInfos = &queueCreateInfo;
+    deviceCreateInfo.enabledExtensionCount = std::size(extensions);
+    deviceCreateInfo.ppEnabledExtensionNames = extensions;
+
+    device = physicalDevice.createDevice(deviceCreateInfo);
+    if (device == nullptr) {
+        throw std::runtime_error("Failed to create device!");
+    }
+
+    queue = device.getQueue(queueFamilyIndex, 0);
+
+       // Surface capabilities
+
+
+}
+
+
+
+void Window::newFrame() {
+
+    if (device.waitForFences(1,&fence,vk::True,std::numeric_limits<uint64_t>::max())!=vk::Result::eSuccess) {
+        throw std::runtime_error("Failed to wait for fence!");
+    }
+
+    if(device.resetFences(1,&fence) != vk::Result::eSuccess){
+        throw std::runtime_error("Failed to reset fence!");
+    }
+
+    auto acquire = device.acquireNextImageKHR(
+        handle,
+        std::numeric_limits<uint64_t>::max(),
+        acquireSemaphore,
+        VK_NULL_HANDLE
+    );
+
+
+    if (acquire.result != vk::Result::eSuccess) {
+        throw std::runtime_error("Failed to new frame");
+    }
+
+    uint32_t imageIndex = acquire.value;
+
+    releaseSemaphore = imageReadySemaphore[imageIndex];
+
+    submitInfo = NULL;
+    submitInfo.sType = vk::StructureType::eSubmitInfo;
+    submitInfo.waitSemaphoreCount = 1;
+    submitInfo.pWaitSemaphores = &acquireSemaphore;
+    submitInfo.pWaitDstStageMask = &pipelineStageFlags;
+    submitInfo.signalSemaphoreCount = 1;
+    submitInfo.pSignalSemaphores = &releaseSemaphore;
+    submitInfo.pNext = nullptr;
+
+    if(queue.submit(1,&submitInfo,fence) != vk::Result::eSuccess) {
+        throw std::runtime_error("Failed to submit queue");
+    }
+
+    presentInfo = vk::PresentInfoKHR(1,&releaseSemaphore,1,&handle,&imageIndex);
+
+
+    if(queue.presentKHR(&presentInfo) != vk::Result::eSuccess) {
+         throw std::runtime_error("Failed to present queue");
+    }
+}
