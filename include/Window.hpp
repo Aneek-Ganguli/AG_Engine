@@ -20,7 +20,8 @@ public:
     bool isWindowOpen();
     void cleanUp();
 
-    void newFrame();
+    void startFrame();
+    void endFrame();
 
 private:
     const char* title;
@@ -59,8 +60,10 @@ private:
     std::vector<vk::Image> images{};
     std::vector<vk::Semaphore> imageReadySemaphore{};
 
-    vk::CommandBuffer commandBuffer{};
-    vk::CommandPool commandPool{};
+    // vk::CommandBuffer commandBuffer{};
+    // vk::CommandPool commandPool{};
 
     uint32_t queueFamilyIndex;
+
+    uint32_t imageIndex;
 };

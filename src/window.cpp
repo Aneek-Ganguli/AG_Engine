@@ -63,7 +63,10 @@ bool supported(std::vector<const char*>& p_extensions,std::vector<const char *>&
 }
 
 void Window::createSwapchain() {
-        vk::SurfaceCapabilitiesKHR surfaceCaps = physicalDevice.getSurfaceCapabilitiesKHR(surface);
+    vk::SemaphoreCreateInfo semaphoreCreateInfo{};
+    semaphoreCreateInfo.sType = vk::StructureType::eSemaphoreCreateInfo;
+
+    vk::SurfaceCapabilitiesKHR surfaceCaps = physicalDevice.getSurfaceCapabilitiesKHR(surface);
 
     // Image count
     uint32_t imageCount = std::max(3u, surfaceCaps.minImageCount);
@@ -133,7 +136,7 @@ void Window::createSwapchain() {
 
     images = device.getSwapchainImagesKHR(handle);
 
-    vk::SemaphoreCreateInfo semaphoreCreateInfo{};
+    semaphoreCreateInfo = vk::SemaphoreCreateInfo{};
     semaphoreCreateInfo.sType = vk::StructureType::eSemaphoreCreateInfo;
 
     imageReadySemaphore.resize(imageCount);
@@ -143,6 +146,7 @@ void Window::createSwapchain() {
     for (auto& semaphore : imageReadySemaphore) {
         semaphore = device.createSemaphore(semaphoreCI);
     }
+    acquireSemaphore = device.createSemaphore(semaphoreCI);
 }
 
 
@@ -210,8 +214,7 @@ Window::Window(const char* p_title,int p_width,int p_height):title(p_title),widt
     logger = Logger(instance);
 
 
-    vk::SemaphoreCreateInfo semaphoreCreateInfo{};
-    semaphoreCreateInfo.sType = vk::StructureType::eSemaphoreCreateInfo;
+
 
 
 
@@ -220,6 +223,7 @@ Window::Window(const char* p_title,int p_width,int p_height):title(p_title),widt
     createSwapchain();
 
     createFence();
+
 
 }
 
@@ -339,7 +343,7 @@ void Window::createDevice() {
 
 
 
-void Window::newFrame() {
+void Window::startFrame() {
 
     if (device.waitForFences(1,&fence,vk::True,std::numeric_limits<uint64_t>::max())!=vk::Result::eSuccess) {
         throw std::runtime_error("Failed to wait for fence!");
@@ -361,8 +365,12 @@ void Window::newFrame() {
         throw std::runtime_error("Failed to new frame");
     }
 
-    uint32_t imageIndex = acquire.value;
+    imageIndex = acquire.value;
 
+
+}
+
+void Window::endFrame() {
     releaseSemaphore = imageReadySemaphore[imageIndex];
 
     submitInfo = NULL;
