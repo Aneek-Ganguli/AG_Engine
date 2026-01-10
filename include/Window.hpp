@@ -60,8 +60,8 @@ private:
     std::vector<vk::Image> images{};
     std::vector<vk::Semaphore> imageReadySemaphore{};
 
-    // vk::CommandBuffer commandBuffer{};
-    // vk::CommandPool commandPool{};
+    std::vector<vk::CommandBuffer> commandBuffer{};
+    vk::CommandPool commandPool{};
 
     uint32_t queueFamilyIndex;
 

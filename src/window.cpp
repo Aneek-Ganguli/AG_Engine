@@ -224,6 +224,29 @@ Window::Window(const char* p_title,int p_width,int p_height):title(p_title),widt
 
     createFence();
 
+    vk::CommandPoolCreateInfo commandPoolCreateInfo{};
+    commandPoolCreateInfo.queueFamilyIndex = queueFamilyIndex;
+    commandPoolCreateInfo.flags =  vk::CommandPoolCreateFlagBits::eTransient;
+
+    if (device.createCommandPool(&commandPoolCreateInfo,nullptr,&commandPool) != vk::Result::eSuccess) {
+        throw std::runtime_error("Failed to create command pool!");
+    }
+
+    vk::CommandBufferAllocateInfo commandBufferAllocateInfo{};
+    commandBufferAllocateInfo.commandPool = commandPool;
+    commandBufferAllocateInfo.level = vk::CommandBufferLevel::ePrimary;
+    commandBufferAllocateInfo.commandBufferCount = 1;
+
+
+    commandBuffer = device.allocateCommandBuffers(commandBufferAllocateInfo);
+
+    if (commandBuffer.empty()) {
+        throw std::runtime_error("Failed to allocate command buffers!");
+    }
+    // if (!= vk::Result::eSuccess) {
+        // throw std::runtime_error("Failed to allocate command buffers!");
+    // }
+
 
 }
 
@@ -233,31 +256,37 @@ bool Window::isWindowOpen() {
 
 void Window::cleanUp() {
 
-    images = {};
+    // Stop GPU execution
+    device.waitIdle();
+
+    // Command buffers & sync
+    device.destroyCommandPool(commandPool);
 
     for (auto semaphore : imageReadySemaphore) {
         device.destroySemaphore(semaphore);
     }
 
     device.destroySemaphore(acquireSemaphore);
+    device.destroyFence(fence);
 
-
-    logger.cleanUp(instance);
-
+    // Swapchain
     device.destroySwapchainKHR(handle);
+
+    // Device
     device.destroy();
 
+    // Debug messenger
+    logger.cleanUp(instance);
+
+    // Surface & instance
     instance.destroySurfaceKHR(surface);
+    instance.destroy();
 
-
-    vkDestroyInstance(instance, nullptr);
-
+    // Windowing
     glfwDestroyWindow(window);
-
     glfwTerminate();
-
-
 }
+
 
 void Window::createGLFWwindow() {
     glfwSetErrorCallback(glfwErrorCallback);
@@ -336,7 +365,7 @@ void Window::createDevice() {
 
     queue = device.getQueue(queueFamilyIndex, 0);
 
-       // Surface capabilities
+
 
 
 }
@@ -353,6 +382,8 @@ void Window::startFrame() {
         throw std::runtime_error("Failed to reset fence!");
     }
 
+
+
     auto acquire = device.acquireNextImageKHR(
         handle,
         std::numeric_limits<uint64_t>::max(),
@@ -368,9 +399,26 @@ void Window::startFrame() {
     imageIndex = acquire.value;
 
 
+
+    device.resetCommandPool(commandPool,{});
+
+    vk::CommandBufferBeginInfo beginInfo{};
+    beginInfo.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
+
+    if (commandBuffer.data()->begin(&beginInfo) != vk::Result::eSuccess) {
+        throw std::runtime_error("Failed to begin command buffer!");
+    }
+
+    // commandBuffer.data()->beginRendering();
+
 }
 
 void Window::endFrame() {
+
+    // commandBuffer.data()->endRendering();
+
+    commandBuffer.data()->end();
+
     releaseSemaphore = imageReadySemaphore[imageIndex];
 
     submitInfo = NULL;
@@ -381,6 +429,8 @@ void Window::endFrame() {
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = &releaseSemaphore;
     submitInfo.pNext = nullptr;
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &commandBuffer[0];
 
     if(queue.submit(1,&submitInfo,fence) != vk::Result::eSuccess) {
         throw std::runtime_error("Failed to submit queue");

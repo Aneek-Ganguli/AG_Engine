@@ -2,3 +2,4 @@ lib/
 .idea/
 shader.frag.spv
 shader.vert.spv
+src/main.cpp
