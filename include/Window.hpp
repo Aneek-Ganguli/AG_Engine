@@ -46,6 +46,8 @@ private:
     void createDevice();
     void createSwapchain();
     void createFence();
+    void createCommandPool();
+    void createCommandBuffer();
 
     uint32_t physicalDeviceCount{};
     vk::PhysicalDeviceProperties properties{};
@@ -56,9 +58,12 @@ private:
     vk::Semaphore acquireSemaphore{};
     vk::Semaphore releaseSemaphore{};
 
+    //Swapchain
     vk::SwapchainKHR handle{};
     std::vector<vk::Image> images{};
     std::vector<vk::Semaphore> imageReadySemaphore{};
+    std::vector<vk::ImageView> imageViews{};
+    // std::vector<vk::ImageView> imageViews;
 
     std::vector<vk::CommandBuffer> commandBuffer{};
     vk::CommandPool commandPool{};
@@ -66,4 +71,5 @@ private:
     uint32_t queueFamilyIndex;
 
     uint32_t imageIndex;
+
 };

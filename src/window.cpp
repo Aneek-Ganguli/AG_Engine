@@ -89,7 +89,7 @@ void Window::createSwapchain() {
     }
 
     // Framebuffer size
-    int width = 0, height = 0;
+    // int width = 0, height = 0;
     glfwGetFramebufferSize(window, &width, &height);
 
     auto presentMode = physicalDevice.getSurfacePresentModesKHR(surface);
@@ -147,7 +147,33 @@ void Window::createSwapchain() {
         semaphore = device.createSemaphore(semaphoreCI);
     }
     acquireSemaphore = device.createSemaphore(semaphoreCI);
+
+
+    // vk::ImageViewCreateInfo imageViewCI{};
+    // imageViewCI.viewType = vk::ImageViewType::e2D;
+    // imageViewCI.image = images[];
+    // imageViewCI.format = surfaceFormat.format;
+
+    // imageView = device.createImageView(imageViewCI);
+
+    for (auto& image : images) {
+        vk::ImageViewCreateInfo imageViewCI{};
+        imageViewCI.sType = vk::StructureType::eImageViewCreateInfo;
+        imageViewCI.viewType = vk::ImageViewType::e2D;
+        imageViewCI.image = image;
+        imageViewCI.format = surfaceFormat.format;
+        imageViewCI.subresourceRange = vk::ImageSubresourceRange(
+            vk::ImageAspectFlagBits::eColor,
+            0,
+            1,
+            0,
+            1
+        );
+
+        imageViews.push_back(device.createImageView(imageViewCI));
+    }
 }
+
 
 
 void Window::createFence() {
@@ -156,6 +182,31 @@ void Window::createFence() {
     fenceCreateInfo.flags = vk::FenceCreateFlagBits::eSignaled;
     if(device.createFence(&fenceCreateInfo,nullptr,&fence)!=vk::Result::eSuccess) {
         throw std::runtime_error("Failed to create fence!");
+    }
+}
+
+void Window::createCommandPool() {
+    vk::CommandPoolCreateInfo commandPoolCreateInfo{};
+    commandPoolCreateInfo.queueFamilyIndex = queueFamilyIndex;
+    commandPoolCreateInfo.flags =  vk::CommandPoolCreateFlagBits::eTransient;
+
+    if (device.createCommandPool(&commandPoolCreateInfo,nullptr,&commandPool) != vk::Result::eSuccess) {
+        throw std::runtime_error("Failed to create command pool!");
+    }
+
+
+}
+
+void Window::createCommandBuffer() {
+    vk::CommandBufferAllocateInfo commandBufferAllocateInfo{};
+    commandBufferAllocateInfo.commandPool = commandPool;
+    commandBufferAllocateInfo.level = vk::CommandBufferLevel::ePrimary;
+    commandBufferAllocateInfo.commandBufferCount = 1;
+
+    commandBuffer = device.allocateCommandBuffers(commandBufferAllocateInfo);
+
+    if (commandBuffer.empty()) {
+        throw std::runtime_error("Failed to allocate command buffers!");
     }
 }
 
@@ -168,7 +219,7 @@ Window::Window(const char* p_title,int p_width,int p_height):title(p_title),widt
 
 
     vk::ApplicationInfo appInfo = vk::ApplicationInfo(title,VK_MAKE_VERSION(1, 0, 0),"AG_Engine Vulkan",
-        VK_MAKE_VERSION(1, 0, 0),VK_API_VERSION_1_0);
+        VK_MAKE_VERSION(1, 0, 0),VK_API_VERSION_1_4);
     // appInfo.apiVersion = VK_API_VERSION_1_0;
 
     //create glfw extensions
@@ -215,38 +266,14 @@ Window::Window(const char* p_title,int p_width,int p_height):title(p_title),widt
 
 
 
-
-
-
     createDevice();
 
     createSwapchain();
 
     createFence();
 
-    vk::CommandPoolCreateInfo commandPoolCreateInfo{};
-    commandPoolCreateInfo.queueFamilyIndex = queueFamilyIndex;
-    commandPoolCreateInfo.flags =  vk::CommandPoolCreateFlagBits::eTransient;
-
-    if (device.createCommandPool(&commandPoolCreateInfo,nullptr,&commandPool) != vk::Result::eSuccess) {
-        throw std::runtime_error("Failed to create command pool!");
-    }
-
-    vk::CommandBufferAllocateInfo commandBufferAllocateInfo{};
-    commandBufferAllocateInfo.commandPool = commandPool;
-    commandBufferAllocateInfo.level = vk::CommandBufferLevel::ePrimary;
-    commandBufferAllocateInfo.commandBufferCount = 1;
-
-
-    commandBuffer = device.allocateCommandBuffers(commandBufferAllocateInfo);
-
-    if (commandBuffer.empty()) {
-        throw std::runtime_error("Failed to allocate command buffers!");
-    }
-    // if (!= vk::Result::eSuccess) {
-        // throw std::runtime_error("Failed to allocate command buffers!");
-    // }
-
+    createCommandPool();
+    createCommandBuffer();
 
 }
 
@@ -266,11 +293,16 @@ void Window::cleanUp() {
         device.destroySemaphore(semaphore);
     }
 
+    for (auto i : imageViews) {
+        device.destroyImageView(i);
+    }
+
     device.destroySemaphore(acquireSemaphore);
     device.destroyFence(fence);
 
     // Swapchain
     device.destroySwapchainKHR(handle);
+
 
     // Device
     device.destroy();
@@ -344,8 +376,13 @@ void Window::createDevice() {
     float queuePriority = 1.0f;
 
     const char* extensions[] = {
-        vk::KHRSwapchainExtensionName
+        vk::KHRSwapchainExtensionName,
     };
+
+    vk::PhysicalDeviceVulkan13Features enabled13{};
+    enabled13.dynamicRendering = VK_TRUE;
+
+
 
     vk::DeviceQueueCreateInfo queueCreateInfo{};
     queueCreateInfo.queueFamilyIndex = queueFamilyIndex;
@@ -357,6 +394,7 @@ void Window::createDevice() {
     deviceCreateInfo.pQueueCreateInfos = &queueCreateInfo;
     deviceCreateInfo.enabledExtensionCount = std::size(extensions);
     deviceCreateInfo.ppEnabledExtensionNames = extensions;
+    deviceCreateInfo.pNext = &enabled13;
 
     device = physicalDevice.createDevice(deviceCreateInfo);
     if (device == nullptr) {
@@ -364,9 +402,6 @@ void Window::createDevice() {
     }
 
     queue = device.getQueue(queueFamilyIndex, 0);
-
-
-
 
 }
 
@@ -409,13 +444,39 @@ void Window::startFrame() {
         throw std::runtime_error("Failed to begin command buffer!");
     }
 
-    // commandBuffer.data()->beginRendering();
+    vk::ClearValue clearValue{};
+    clearValue.color.float32[0] = 1.0f;
+    clearValue.color.float32[1] = 0.0f;
+    clearValue.color.float32[2] = 0.0f;
+    clearValue.color.float32[3] = 1.0f;
 
+    vk::RenderingAttachmentInfo  colorAttachmentInfo{};
+    colorAttachmentInfo.imageLayout = vk::ImageLayout::eColorAttachmentOptimal;
+    colorAttachmentInfo.imageView = imageViews[imageIndex];
+    colorAttachmentInfo.loadOp = vk::AttachmentLoadOp::eClear;
+    colorAttachmentInfo.storeOp = vk::AttachmentStoreOp::eStore;
+    colorAttachmentInfo.clearValue =clearValue;
+
+    vk::RenderingInfo renderingInfo{};
+    renderingInfo.renderArea = vk::Rect2D(
+        {0,0},
+        {static_cast<uint32_t>(width),static_cast<uint32_t>(height)}
+    );
+    renderingInfo.layerCount = 1;
+    renderingInfo.colorAttachmentCount =1;
+    renderingInfo.pColorAttachments = &colorAttachmentInfo;
+
+    //     {
+    //     .offset = {0,0},
+    //     .extent = ((uint32_t)width, (uint32_t)height)
+    // };
+
+    commandBuffer.data()->beginRendering(&renderingInfo);
 }
 
 void Window::endFrame() {
 
-    // commandBuffer.data()->endRendering();
+    commandBuffer.data()->endRendering();
 
     commandBuffer.data()->end();
 
@@ -435,6 +496,8 @@ void Window::endFrame() {
     if(queue.submit(1,&submitInfo,fence) != vk::Result::eSuccess) {
         throw std::runtime_error("Failed to submit queue");
     }
+
+    // queue.submit(submitInfo,fence);
 
     presentInfo = vk::PresentInfoKHR(1,&releaseSemaphore,1,&handle,&imageIndex);
 
