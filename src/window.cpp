@@ -149,12 +149,6 @@ void Window::createSwapchain() {
     acquireSemaphore = device.createSemaphore(semaphoreCI);
 
 
-    // vk::ImageViewCreateInfo imageViewCI{};
-    // imageViewCI.viewType = vk::ImageViewType::e2D;
-    // imageViewCI.image = images[];
-    // imageViewCI.format = surfaceFormat.format;
-
-    // imageView = device.createImageView(imageViewCI);
 
     for (auto& image : images) {
         vk::ImageViewCreateInfo imageViewCI{};
@@ -219,7 +213,7 @@ Window::Window(const char* p_title,int p_width,int p_height):title(p_title),widt
 
 
     vk::ApplicationInfo appInfo = vk::ApplicationInfo(title,VK_MAKE_VERSION(1, 0, 0),"AG_Engine Vulkan",
-        VK_MAKE_VERSION(1, 0, 0),VK_API_VERSION_1_4);
+        VK_MAKE_VERSION(1, 0, 0),VK_API_VERSION_1_3);
     // appInfo.apiVersion = VK_API_VERSION_1_0;
 
     //create glfw extensions
@@ -381,6 +375,7 @@ void Window::createDevice() {
 
     vk::PhysicalDeviceVulkan13Features enabled13{};
     enabled13.dynamicRendering = VK_TRUE;
+    enabled13.synchronization2 = VK_TRUE;
 
 
 
@@ -440,14 +435,35 @@ void Window::startFrame() {
     vk::CommandBufferBeginInfo beginInfo{};
     beginInfo.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
 
+
     if (commandBuffer.data()->begin(&beginInfo) != vk::Result::eSuccess) {
         throw std::runtime_error("Failed to begin command buffer!");
     }
 
+    vk::ImageMemoryBarrier2 transitionToColorAttachmentBarrier{};
+    transitionToColorAttachmentBarrier.image = images[imageIndex];
+    transitionToColorAttachmentBarrier.subresourceRange = vk::ImageSubresourceRange(
+        vk::ImageAspectFlagBits::eColor,
+        0,
+        1,
+        0,
+        1
+    );
+    transitionToColorAttachmentBarrier.oldLayout = vk::ImageLayout::eUndefined;
+    transitionToColorAttachmentBarrier.newLayout = vk::ImageLayout::eColorAttachmentOptimal;
+    transitionToColorAttachmentBarrier.srcStageMask = vk::PipelineStageFlagBits2::eAllCommands;
+    transitionToColorAttachmentBarrier.srcAccessMask = vk::AccessFlagBits2::eMemoryRead;
+    transitionToColorAttachmentBarrier.dstStageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput;
+    transitionToColorAttachmentBarrier.dstAccessMask = vk::AccessFlagBits2::eColorAttachmentWrite;
+    vk::DependencyInfo dependencyInfo{};
+    dependencyInfo.imageMemoryBarrierCount = 1;
+    dependencyInfo.pImageMemoryBarriers = &transitionToColorAttachmentBarrier;
+    commandBuffer.data()->pipelineBarrier2(dependencyInfo);
+
     vk::ClearValue clearValue{};
-    clearValue.color.float32[0] = 1.0f;
-    clearValue.color.float32[1] = 0.0f;
-    clearValue.color.float32[2] = 0.0f;
+    clearValue.color.float32[0] = 0.0f;
+    clearValue.color.float32[1] = 1.0f;
+    clearValue.color.float32[2] = 1.0f;
     clearValue.color.float32[3] = 1.0f;
 
     vk::RenderingAttachmentInfo  colorAttachmentInfo{};
@@ -477,6 +493,28 @@ void Window::startFrame() {
 void Window::endFrame() {
 
     commandBuffer.data()->endRendering();
+
+
+    vk::ImageMemoryBarrier2 transitionToPresent_src_Barrier{};
+    transitionToPresent_src_Barrier.image = images[imageIndex];
+    transitionToPresent_src_Barrier.subresourceRange = vk::ImageSubresourceRange(
+        vk::ImageAspectFlagBits::eColor,
+        0,
+        1,
+        0,
+        1
+    );
+    transitionToPresent_src_Barrier.oldLayout = vk::ImageLayout::eColorAttachmentOptimal;
+    transitionToPresent_src_Barrier.newLayout = vk::ImageLayout::ePresentSrcKHR;
+    transitionToPresent_src_Barrier.srcStageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput;
+    transitionToPresent_src_Barrier.srcAccessMask = vk::AccessFlagBits2::eColorAttachmentWrite;
+    transitionToPresent_src_Barrier.dstAccessMask = {};
+    transitionToPresent_src_Barrier.dstStageMask = {};
+
+    vk::DependencyInfo dependencyInfo{};
+    dependencyInfo.imageMemoryBarrierCount = 1;
+    dependencyInfo.pImageMemoryBarriers = &transitionToPresent_src_Barrier;
+    commandBuffer.data()->pipelineBarrier2(dependencyInfo);
 
     commandBuffer.data()->end();
 
