@@ -62,6 +62,8 @@ bool supported(std::vector<const char*>& p_extensions,std::vector<const char *>&
     return true;
 }
 
+
+
 void Window::createSwapchain() {
     vk::SemaphoreCreateInfo semaphoreCreateInfo{};
     semaphoreCreateInfo.sType = vk::StructureType::eSemaphoreCreateInfo;
@@ -69,7 +71,7 @@ void Window::createSwapchain() {
     vk::SurfaceCapabilitiesKHR surfaceCaps = physicalDevice.getSurfaceCapabilitiesKHR(surface);
 
     // Image count
-    uint32_t imageCount = std::max(3u, surfaceCaps.minImageCount);
+    uint32_t imageCount = std::max(NUM_SWAPCHAIN_IMAGES, surfaceCaps.minImageCount);
     if (surfaceCaps.maxImageCount > 0) {
         imageCount = std::min(imageCount, surfaceCaps.maxImageCount);
     }
@@ -139,14 +141,13 @@ void Window::createSwapchain() {
     semaphoreCreateInfo = vk::SemaphoreCreateInfo{};
     semaphoreCreateInfo.sType = vk::StructureType::eSemaphoreCreateInfo;
 
-    imageReadySemaphore.resize(imageCount);
+    imagePresentSemaphore.resize(imageCount);
 
     vk::SemaphoreCreateInfo semaphoreCI{};
 
-    for (auto& semaphore : imageReadySemaphore) {
-        semaphore = device.createSemaphore(semaphoreCI);
+    for (auto& semaphore : imagePresentSemaphore) {
+        semaphore = device.createSemaphore(semaphoreCI);//no info
     }
-    acquireSemaphore = device.createSemaphore(semaphoreCI);
 
 
 
@@ -170,37 +171,62 @@ void Window::createSwapchain() {
 
 
 
-void Window::createFence() {
+vk::Fence Window::createFence() {
     vk::FenceCreateInfo fenceCreateInfo{};
     fenceCreateInfo.sType = vk::StructureType::eFenceCreateInfo;
     fenceCreateInfo.flags = vk::FenceCreateFlagBits::eSignaled;
+    vk::Fence fence{};
     if(device.createFence(&fenceCreateInfo,nullptr,&fence)!=vk::Result::eSuccess) {
         throw std::runtime_error("Failed to create fence!");
     }
+
+    return fence;
 }
 
-void Window::createCommandPool() {
+vk::CommandPool Window::createCommandPool() {
     vk::CommandPoolCreateInfo commandPoolCreateInfo{};
     commandPoolCreateInfo.queueFamilyIndex = queueFamilyIndex;
     commandPoolCreateInfo.flags =  vk::CommandPoolCreateFlagBits::eTransient;
 
+    vk::CommandPool commandPool{};
     if (device.createCommandPool(&commandPoolCreateInfo,nullptr,&commandPool) != vk::Result::eSuccess) {
         throw std::runtime_error("Failed to create command pool!");
     }
 
-
+    return commandPool;
 }
-
-void Window::createCommandBuffer() {
+std::vector<vk::CommandBuffer> Window::createCommandBuffer(vk::CommandPool commandPool) {
     vk::CommandBufferAllocateInfo commandBufferAllocateInfo{};
     commandBufferAllocateInfo.commandPool = commandPool;
     commandBufferAllocateInfo.level = vk::CommandBufferLevel::ePrimary;
     commandBufferAllocateInfo.commandBufferCount = 1;
 
+    std::vector<vk::CommandBuffer> commandBuffer{};
     commandBuffer = device.allocateCommandBuffers(commandBufferAllocateInfo);
 
     if (commandBuffer.empty()) {
         throw std::runtime_error("Failed to allocate command buffers!");
+    }
+    return commandBuffer;
+}
+
+void Window::createFrameData() {
+    for (auto& e : frameData) {
+        e.commandPool = createCommandPool();
+        e.commandBuffer = *createCommandBuffer(e.commandPool).data();
+        e.fence = createFence();
+        vk::SemaphoreCreateInfo semaphoreCreateInfo{};
+        e.acquireSemaphore = device.createSemaphore(semaphoreCreateInfo);//no info can be {}
+    }
+}
+
+
+
+void Window::destroyFrameData() {
+    for (auto& e : frameData) {
+        device.destroyCommandPool(e.commandPool);
+        device.destroySemaphore(e.acquireSemaphore);
+        device.destroyFence(e.fence);
     }
 }
 
@@ -263,11 +289,13 @@ Window::Window(const char* p_title,int p_width,int p_height):title(p_title),widt
     createDevice();
 
     createSwapchain();
+    //
+    // createFence();
+    //
+    // createCommandPool();
+    // createCommandBuffer();
 
-    createFence();
-
-    createCommandPool();
-    createCommandBuffer();
+    createFrameData();
 
 }
 
@@ -275,15 +303,17 @@ bool Window::isWindowOpen() {
     return !glfwWindowShouldClose(window);
 }
 
+
 void Window::cleanUp() {
 
     // Stop GPU execution
     device.waitIdle();
 
     // Command buffers & sync
-    device.destroyCommandPool(commandPool);
 
-    for (auto semaphore : imageReadySemaphore) {
+    destroyFrameData();
+
+    for (auto semaphore : imagePresentSemaphore) {
         device.destroySemaphore(semaphore);
     }
 
@@ -291,8 +321,7 @@ void Window::cleanUp() {
         device.destroyImageView(i);
     }
 
-    device.destroySemaphore(acquireSemaphore);
-    device.destroyFence(fence);
+
 
     // Swapchain
     device.destroySwapchainKHR(handle);
@@ -403,12 +432,12 @@ void Window::createDevice() {
 
 
 void Window::startFrame() {
-
-    if (device.waitForFences(1,&fence,vk::True,std::numeric_limits<uint64_t>::max())!=vk::Result::eSuccess) {
+    currentFrameData = frameData[frameIndex];
+    if (device.waitForFences(1,&currentFrameData.fence,vk::True,std::numeric_limits<uint64_t>::max())!=vk::Result::eSuccess) {
         throw std::runtime_error("Failed to wait for fence!");
     }
 
-    if(device.resetFences(1,&fence) != vk::Result::eSuccess){
+    if(device.resetFences(1,&currentFrameData.fence) != vk::Result::eSuccess){
         throw std::runtime_error("Failed to reset fence!");
     }
 
@@ -417,7 +446,7 @@ void Window::startFrame() {
     auto acquire = device.acquireNextImageKHR(
         handle,
         std::numeric_limits<uint64_t>::max(),
-        acquireSemaphore,
+        currentFrameData.acquireSemaphore,
         VK_NULL_HANDLE
     );
 
@@ -430,13 +459,13 @@ void Window::startFrame() {
 
 
 
-    device.resetCommandPool(commandPool,{});
+    device.resetCommandPool(currentFrameData.commandPool,{});
 
     vk::CommandBufferBeginInfo beginInfo{};
     beginInfo.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
 
 
-    if (commandBuffer.data()->begin(&beginInfo) != vk::Result::eSuccess) {
+    if (currentFrameData.commandBuffer.begin(&beginInfo) != vk::Result::eSuccess) {
         throw std::runtime_error("Failed to begin command buffer!");
     }
 
@@ -458,7 +487,7 @@ void Window::startFrame() {
     vk::DependencyInfo dependencyInfo{};
     dependencyInfo.imageMemoryBarrierCount = 1;
     dependencyInfo.pImageMemoryBarriers = &transitionToColorAttachmentBarrier;
-    commandBuffer.data()->pipelineBarrier2(dependencyInfo);
+    currentFrameData.commandBuffer.pipelineBarrier2(dependencyInfo);
 
     vk::ClearValue clearValue{};
     clearValue.color.float32[0] = 0.0f;
@@ -487,13 +516,12 @@ void Window::startFrame() {
     //     .extent = ((uint32_t)width, (uint32_t)height)
     // };
 
-    commandBuffer.data()->beginRendering(&renderingInfo);
+    currentFrameData.commandBuffer.beginRendering(&renderingInfo);
 }
 
 void Window::endFrame() {
 
-    commandBuffer.data()->endRendering();
-
+    currentFrameData.commandBuffer.endRendering();
 
     vk::ImageMemoryBarrier2 transitionToPresent_src_Barrier{};
     transitionToPresent_src_Barrier.image = images[imageIndex];
@@ -514,33 +542,35 @@ void Window::endFrame() {
     vk::DependencyInfo dependencyInfo{};
     dependencyInfo.imageMemoryBarrierCount = 1;
     dependencyInfo.pImageMemoryBarriers = &transitionToPresent_src_Barrier;
-    commandBuffer.data()->pipelineBarrier2(dependencyInfo);
+    currentFrameData.commandBuffer.pipelineBarrier2(dependencyInfo);
 
-    commandBuffer.data()->end();
+    currentFrameData.commandBuffer.end();
 
-    releaseSemaphore = imageReadySemaphore[imageIndex];
+    presentSemaphore = imagePresentSemaphore[imageIndex];
 
     submitInfo = NULL;
     submitInfo.sType = vk::StructureType::eSubmitInfo;
     submitInfo.waitSemaphoreCount = 1;
-    submitInfo.pWaitSemaphores = &acquireSemaphore;
+    submitInfo.pWaitSemaphores = &currentFrameData.acquireSemaphore;
     submitInfo.pWaitDstStageMask = &pipelineStageFlags;
     submitInfo.signalSemaphoreCount = 1;
-    submitInfo.pSignalSemaphores = &releaseSemaphore;
+    submitInfo.pSignalSemaphores = &presentSemaphore;
     submitInfo.pNext = nullptr;
     submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &commandBuffer[0];
+    submitInfo.pCommandBuffers = &currentFrameData.commandBuffer;
 
-    if(queue.submit(1,&submitInfo,fence) != vk::Result::eSuccess) {
+    if(queue.submit(1,&submitInfo,currentFrameData.fence) != vk::Result::eSuccess) {
         throw std::runtime_error("Failed to submit queue");
     }
 
     // queue.submit(submitInfo,fence);
 
-    presentInfo = vk::PresentInfoKHR(1,&releaseSemaphore,1,&handle,&imageIndex);
+    presentInfo = vk::PresentInfoKHR(1,&presentSemaphore,1,&handle,&imageIndex);
 
 
     if(queue.presentKHR(&presentInfo) != vk::Result::eSuccess) {
          throw std::runtime_error("Failed to present queue");
     }
+
+    frameIndex = (frameIndex + 1) % NUM_FRAMES_IN_FLIGHT;
 }

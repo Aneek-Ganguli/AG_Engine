@@ -4,12 +4,15 @@
 #include  <vulkan/vulkan.hpp>
 
 #include "Logger.hpp"
+#include "PerFrameData.hpp"
 
 #ifdef DEBUG
     static bool debug = true;
 #else
     static bool debug = false;
 #endif
+
+static constexpr uint32_t NUM_FRAMES_IN_FLIGHT = 2u,NUM_SWAPCHAIN_IMAGES = 3u;
 
 class Window {
 public:
@@ -29,47 +32,42 @@ private:
     GLFWwindow* window{};
     Logger logger;
     vk::Instance instance{};
-
     vk::SurfaceKHR surface{};
-
     uint32_t imageCount{};
-
-    vk::Fence fence{};
-
     vk::SubmitInfo submitInfo{};
-
     vk::PipelineStageFlags pipelineStageFlags = vk::PipelineStageFlagBits::eColorAttachmentOutput ;
-
     vk::PresentInfoKHR presentInfo{};
+
 
     void createGLFWwindow();
     void createDevice();
     void createSwapchain();
-    void createFence();
-    void createCommandPool();
-    void createCommandBuffer();
-
+    vk::Fence createFence();
+    vk::CommandPool createCommandPool();
+    std::vector<vk::CommandBuffer> createCommandBuffer(vk::CommandPool commandPool);
     uint32_t physicalDeviceCount{};
     vk::PhysicalDeviceProperties properties{};
     vk::PhysicalDevice physicalDevice{};
     vk::Device device{};
     vk::Queue queue{};
-
-    vk::Semaphore acquireSemaphore{};
-    vk::Semaphore releaseSemaphore{};
+    vk::Semaphore presentSemaphore{};
 
     //Swapchain
     vk::SwapchainKHR handle{};
     std::vector<vk::Image> images{};
-    std::vector<vk::Semaphore> imageReadySemaphore{};
+    std::vector<vk::Semaphore> imagePresentSemaphore{};
     std::vector<vk::ImageView> imageViews{};
     // std::vector<vk::ImageView> imageViews;
 
-    std::vector<vk::CommandBuffer> commandBuffer{};
-    vk::CommandPool commandPool{};
 
     uint32_t queueFamilyIndex;
 
     uint32_t imageIndex;
 
+    PerFrameData frameData[NUM_FRAMES_IN_FLIGHT]{};
+    PerFrameData currentFrameData{};
+    uint8_t frameIndex = 0u;
+
+    void createFrameData();
+    void destroyFrameData();
 };
