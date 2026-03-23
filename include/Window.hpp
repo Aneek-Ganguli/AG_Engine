@@ -52,6 +52,7 @@ private:
     vk::Queue queue{};
     vk::Semaphore presentSemaphore{};
 
+    vk::SurfaceFormatKHR actualSurfaceFormat{};
     //Swapchain
     vk::SwapchainKHR handle{};
     std::vector<vk::Image> images{};
@@ -62,12 +63,22 @@ private:
 
     uint32_t queueFamilyIndex;
 
-    uint32_t imageIndex;
+    uint32_t imageIndex = 0;
 
     PerFrameData frameData[NUM_FRAMES_IN_FLIGHT]{};
-    PerFrameData currentFrameData{};
+    PerFrameData* currentFrameData = nullptr;
     uint8_t frameIndex = 0u;
 
     void createFrameData();
     void destroyFrameData();
+
+    vk::Pipeline graphicsPipeline{};
+    void createGraphicsPipeline();
+
+    vk::ShaderModule vertexShader{};
+    vk::ShaderModule fragmentShader{};
+    void createShaderModules();
+
+    vk::PipelineLayout pipelineLayout;
 };
+

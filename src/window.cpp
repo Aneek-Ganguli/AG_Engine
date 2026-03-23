@@ -3,7 +3,8 @@
 #include <vulkan/vulkan.hpp>
 #include <iostream>
 #include  <Window.hpp>
-
+#include "vertexShader.h"
+#include "fragmentShader.h"
 
 void glfwErrorCallback(int error, const char* description){
     std::cerr << "[GLFW ERROR] (" << error << "): " << description << std::endl;
@@ -80,6 +81,8 @@ void Window::createSwapchain() {
     std::vector<vk::SurfaceFormatKHR> surfaceFormats =
         physicalDevice.getSurfaceFormatsKHR(surface);
 
+
+
     // Pick preferred format
     vk::SurfaceFormatKHR surfaceFormat = surfaceFormats.front();
     for (const auto& candidate : surfaceFormats) {
@@ -89,6 +92,8 @@ void Window::createSwapchain() {
             break;
             }
     }
+
+    actualSurfaceFormat = surfaceFormat;
 
     // Framebuffer size
     // int width = 0, height = 0;
@@ -297,6 +302,9 @@ Window::Window(const char* p_title,int p_width,int p_height):title(p_title),widt
 
     createFrameData();
 
+    createShaderModules();
+    createGraphicsPipeline();
+
 }
 
 bool Window::isWindowOpen() {
@@ -321,10 +329,15 @@ void Window::cleanUp() {
         device.destroyImageView(i);
     }
 
+    device.destroyShaderModule(vertexShader,nullptr);
+    device.destroyShaderModule(fragmentShader,nullptr);
 
 
     // Swapchain
     device.destroySwapchainKHR(handle);
+
+    device.destroyPipelineLayout(pipelineLayout);
+    device.destroyPipeline(graphicsPipeline);
 
 
     // Device
@@ -429,15 +442,121 @@ void Window::createDevice() {
 
 }
 
+void Window::createShaderModules() {
+    vk::ShaderModuleCreateInfo vertexShaderModuleCreateInfo{};
+    vertexShaderModuleCreateInfo.codeSize = shader_vert_spv_len;
+    vertexShaderModuleCreateInfo.pCode = reinterpret_cast<const uint32_t*>(shader_vert_spv);
+
+    if (device.createShaderModule(&vertexShaderModuleCreateInfo,nullptr,&vertexShader) != vk::Result::eSuccess) {
+        throw std::runtime_error("Failed to create vertex shader module!");
+    }
+
+    vk::ShaderModuleCreateInfo fragmentShaderModuleCreateInfo{};
+    fragmentShaderModuleCreateInfo.codeSize = shader_frag_spv_len;
+    fragmentShaderModuleCreateInfo.pCode = reinterpret_cast<const uint32_t*>(shader_frag_spv);
+
+    if (device.createShaderModule(&fragmentShaderModuleCreateInfo,nullptr,&fragmentShader) != vk::Result::eSuccess) {
+        throw std::runtime_error("Failed to create fragment shader module!");
+    }
+}
+
+void Window::createGraphicsPipeline() {
+    // ALL local, no member variables
+    std::vector<vk::DynamicState> dynamicStates = {
+        vk::DynamicState::eViewport,
+        vk::DynamicState::eScissor
+    };
+
+    vk::PipelineDynamicStateCreateInfo dynamicState{};
+    dynamicState.dynamicStateCount = dynamicStates.size();
+    dynamicState.pDynamicStates    = dynamicStates.data();
+
+    vk::PipelineVertexInputStateCreateInfo vertexInput{};
+
+    vk::PipelineInputAssemblyStateCreateInfo inputAssembly{};
+    inputAssembly.topology               = vk::PrimitiveTopology::eTriangleList;
+    inputAssembly.primitiveRestartEnable = vk::False;
+
+    vk::PipelineViewportStateCreateInfo viewportState{};
+    viewportState.viewportCount = 1;
+    viewportState.scissorCount  = 1;
+
+    vk::PipelineRasterizationStateCreateInfo rasterizer{};
+    rasterizer.depthClampEnable        = vk::False;
+    rasterizer.rasterizerDiscardEnable = vk::False;
+    rasterizer.polygonMode             = vk::PolygonMode::eFill;
+    rasterizer.cullMode                = vk::CullModeFlagBits::eNone;
+    rasterizer.frontFace               = vk::FrontFace::eClockwise;
+    rasterizer.depthBiasEnable         = vk::False;
+    rasterizer.lineWidth               = 1.0f;
+
+    vk::PipelineMultisampleStateCreateInfo multisampling{};
+    multisampling.sampleShadingEnable  = vk::False;
+    multisampling.rasterizationSamples = vk::SampleCountFlagBits::e1;
+
+    vk::PipelineColorBlendAttachmentState colorBlendAttachment{};
+    colorBlendAttachment.colorWriteMask =
+        vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
+        vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+    colorBlendAttachment.blendEnable = vk::False;
+
+    vk::PipelineColorBlendStateCreateInfo colorBlending{};
+    colorBlending.logicOpEnable   = vk::False;
+    colorBlending.attachmentCount = 1;
+    colorBlending.pAttachments    = &colorBlendAttachment; // safe, both local
+
+    vk::PipelineLayoutCreateInfo layoutInfo{};
+    if (device.createPipelineLayout(&layoutInfo, nullptr, &pipelineLayout) != vk::Result::eSuccess) {
+        throw std::runtime_error("failed to create pipeline layout!");
+    }
+
+    vk::Format colorFormat = actualSurfaceFormat.format;
+    vk::PipelineRenderingCreateInfo renderingInfo{};
+    renderingInfo.colorAttachmentCount    = 1;
+    renderingInfo.pColorAttachmentFormats = &colorFormat;
+
+    vk::PipelineShaderStageCreateInfo vertStage{};
+    vertStage.stage  = vk::ShaderStageFlagBits::eVertex;
+    vertStage.module = vertexShader;
+    vertStage.pName  = "main";
+
+    vk::PipelineShaderStageCreateInfo fragStage{};
+    fragStage.stage  = vk::ShaderStageFlagBits::eFragment;
+    fragStage.module = fragmentShader;
+    fragStage.pName  = "main";
+
+    vk::PipelineShaderStageCreateInfo shaderStages[] = { vertStage, fragStage };
+
+    vk::GraphicsPipelineCreateInfo pipelineInfo{};
+    pipelineInfo.pNext               = &renderingInfo;
+    pipelineInfo.stageCount          = 2;
+    pipelineInfo.pStages             = shaderStages;
+    pipelineInfo.pVertexInputState   = &vertexInput;
+    pipelineInfo.pInputAssemblyState = &inputAssembly;
+    pipelineInfo.pViewportState      = &viewportState;
+    pipelineInfo.pRasterizationState = &rasterizer;
+    pipelineInfo.pMultisampleState   = &multisampling;
+    pipelineInfo.pColorBlendState    = &colorBlending;
+    pipelineInfo.pDynamicState       = &dynamicState;
+    pipelineInfo.layout              = pipelineLayout;
+    pipelineInfo.renderPass          = nullptr;
+
+    auto result = device.createGraphicsPipelines(VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline);
+    if (result != vk::Result::eSuccess) {
+        throw std::runtime_error("failed to create graphics pipeline!");
+    }
+}
 
 
 void Window::startFrame() {
-    currentFrameData = frameData[frameIndex];
-    if (device.waitForFences(1,&currentFrameData.fence,vk::True,std::numeric_limits<uint64_t>::max())!=vk::Result::eSuccess) {
+    currentFrameData = &frameData[frameIndex];
+
+
+    if (device.waitForFences(1,&currentFrameData->fence,vk::True,std::numeric_limits<uint64_t>::max())!=vk::Result::eSuccess) {
         throw std::runtime_error("Failed to wait for fence!");
     }
 
-    if(device.resetFences(1,&currentFrameData.fence) != vk::Result::eSuccess){
+    if(device.resetFences(1,&currentFrameData->fence) != vk::Result::eSuccess){
         throw std::runtime_error("Failed to reset fence!");
     }
 
@@ -446,7 +565,7 @@ void Window::startFrame() {
     auto acquire = device.acquireNextImageKHR(
         handle,
         std::numeric_limits<uint64_t>::max(),
-        currentFrameData.acquireSemaphore,
+        currentFrameData->acquireSemaphore,
         VK_NULL_HANDLE
     );
 
@@ -459,13 +578,13 @@ void Window::startFrame() {
 
 
 
-    device.resetCommandPool(currentFrameData.commandPool,{});
+    device.resetCommandPool(currentFrameData->commandPool,{});
 
     vk::CommandBufferBeginInfo beginInfo{};
     beginInfo.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
 
 
-    if (currentFrameData.commandBuffer.begin(&beginInfo) != vk::Result::eSuccess) {
+    if (currentFrameData->commandBuffer.begin(&beginInfo) != vk::Result::eSuccess) {
         throw std::runtime_error("Failed to begin command buffer!");
     }
 
@@ -484,16 +603,19 @@ void Window::startFrame() {
     transitionToColorAttachmentBarrier.srcAccessMask = vk::AccessFlagBits2::eMemoryRead;
     transitionToColorAttachmentBarrier.dstStageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput;
     transitionToColorAttachmentBarrier.dstAccessMask = vk::AccessFlagBits2::eColorAttachmentWrite;
+
+
     vk::DependencyInfo dependencyInfo{};
     dependencyInfo.imageMemoryBarrierCount = 1;
     dependencyInfo.pImageMemoryBarriers = &transitionToColorAttachmentBarrier;
-    currentFrameData.commandBuffer.pipelineBarrier2(dependencyInfo);
+    currentFrameData->commandBuffer.pipelineBarrier2(dependencyInfo);
 
     vk::ClearValue clearValue{};
     clearValue.color.float32[0] = 0.0f;
     clearValue.color.float32[1] = 1.0f;
     clearValue.color.float32[2] = 1.0f;
     clearValue.color.float32[3] = 1.0f;
+
 
     vk::RenderingAttachmentInfo  colorAttachmentInfo{};
     colorAttachmentInfo.imageLayout = vk::ImageLayout::eColorAttachmentOptimal;
@@ -511,17 +633,40 @@ void Window::startFrame() {
     renderingInfo.colorAttachmentCount =1;
     renderingInfo.pColorAttachments = &colorAttachmentInfo;
 
-    //     {
-    //     .offset = {0,0},
-    //     .extent = ((uint32_t)width, (uint32_t)height)
-    // };
 
-    currentFrameData.commandBuffer.beginRendering(&renderingInfo);
+
+    currentFrameData->commandBuffer.beginRendering(&renderingInfo);
+
+    // currentFrameData->commandBuffer.draw(3,1,0,0);
+
+    assert(graphicsPipeline != VK_NULL_HANDLE && "Pipeline is null!");
+    assert(width > 0 && height > 0 && "Invalid dimensions!");
+
+    vk::Viewport vp{};
+    vp.x        = 0.0f;
+    vp.y        = 0.0f;
+    vp.width    = (float)width;
+    vp.height   = (float)height;
+    vp.minDepth = 0.0f;
+    vp.maxDepth = 1.0f;
+
+    vk::Rect2D sc{};
+    sc.offset.x = 0.0f;
+    sc.offset.y = 0.0f;
+
+    sc.extent.width = (uint32_t)width;
+    sc.extent.height = (uint32_t)height;
+
+    currentFrameData->commandBuffer.setViewport(0, 1, &vp);
+    currentFrameData->commandBuffer.setScissor(0, 1, &sc);
+
+    currentFrameData->commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
+    currentFrameData->commandBuffer.draw(3, 1, 0, 0);
 }
 
 void Window::endFrame() {
 
-    currentFrameData.commandBuffer.endRendering();
+    currentFrameData->commandBuffer.endRendering();
 
     vk::ImageMemoryBarrier2 transitionToPresent_src_Barrier{};
     transitionToPresent_src_Barrier.image = images[imageIndex];
@@ -542,24 +687,24 @@ void Window::endFrame() {
     vk::DependencyInfo dependencyInfo{};
     dependencyInfo.imageMemoryBarrierCount = 1;
     dependencyInfo.pImageMemoryBarriers = &transitionToPresent_src_Barrier;
-    currentFrameData.commandBuffer.pipelineBarrier2(dependencyInfo);
+    currentFrameData->commandBuffer.pipelineBarrier2(dependencyInfo);
 
-    currentFrameData.commandBuffer.end();
+    currentFrameData->commandBuffer.end();
 
     presentSemaphore = imagePresentSemaphore[imageIndex];
 
     submitInfo = NULL;
     submitInfo.sType = vk::StructureType::eSubmitInfo;
     submitInfo.waitSemaphoreCount = 1;
-    submitInfo.pWaitSemaphores = &currentFrameData.acquireSemaphore;
+    submitInfo.pWaitSemaphores = &currentFrameData->acquireSemaphore;
     submitInfo.pWaitDstStageMask = &pipelineStageFlags;
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = &presentSemaphore;
     submitInfo.pNext = nullptr;
     submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &currentFrameData.commandBuffer;
+    submitInfo.pCommandBuffers = &currentFrameData->commandBuffer;
 
-    if(queue.submit(1,&submitInfo,currentFrameData.fence) != vk::Result::eSuccess) {
+    if(queue.submit(1,&submitInfo,currentFrameData->fence) != vk::Result::eSuccess) {
         throw std::runtime_error("Failed to submit queue");
     }
 
