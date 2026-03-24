@@ -2,6 +2,9 @@
 #include <Window.hpp>
 #include <GLFW/glfw3.h>
 
+void rendering(vk::CommandBuffer commandBuffer) {
+    commandBuffer.draw(3, 1, 0, 0);
+}
 
 int main() {
     std::cout << "Hello World!" << std::endl;
@@ -12,6 +15,8 @@ int main() {
         glfwPollEvents();
 
         window.startFrame();
+
+        window.doWhileRendering(&rendering);
 
         window.endFrame();
     }

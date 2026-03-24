@@ -1,4 +1,5 @@
 #pragma once
+#include <functional>
 #include <GLFW/glfw3.h>
 
 #include  <vulkan/vulkan.hpp>
@@ -25,6 +26,8 @@ public:
 
     void startFrame();
     void endFrame();
+
+    void doWhileRendering(void(*func_ptr)(vk::CommandBuffer));
 
 private:
     const char* title;

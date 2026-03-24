@@ -661,8 +661,13 @@ void Window::startFrame() {
     currentFrameData->commandBuffer.setScissor(0, 1, &sc);
 
     currentFrameData->commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
-    currentFrameData->commandBuffer.draw(3, 1, 0, 0);
+
 }
+
+void Window::doWhileRendering(void(*func_ptr)(vk::CommandBuffer)) {
+    func_ptr(currentFrameData->commandBuffer);
+}
+
 
 void Window::endFrame() {
 
