@@ -17,6 +17,8 @@ add_executable(VulkanProject
         src/main.cpp
         src/window.cpp
         src/logger.cpp
+        src/vertexInfo.cpp
+        src/entity.cpp
 )
 
 target_compile_definitions(VulkanProject PRIVATE DEBUG=1)

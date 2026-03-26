@@ -6,6 +6,7 @@
 
 #include "Logger.hpp"
 #include "PerFrameData.hpp"
+#include "VertexInfo.hpp"
 
 #ifdef DEBUG
     static bool debug = true;
@@ -28,6 +29,9 @@ public:
     void endFrame();
 
     void doWhileRendering(void(*func_ptr)(vk::CommandBuffer));
+
+    vk::Device* getDevice(){return &device;}
+    vk::PhysicalDevice* getPhysicalDevice(){return &physicalDevice;}
 
 private:
     const char* title;
@@ -83,5 +87,7 @@ private:
     void createShaderModules();
 
     vk::PipelineLayout pipelineLayout;
+
+    VertexInfo vertexInfo{};
 };
 

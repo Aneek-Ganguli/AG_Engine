@@ -294,16 +294,14 @@ Window::Window(const char* p_title,int p_width,int p_height):title(p_title),widt
     createDevice();
 
     createSwapchain();
-    //
-    // createFence();
-    //
-    // createCommandPool();
-    // createCommandBuffer();
 
     createFrameData();
 
     createShaderModules();
     createGraphicsPipeline();
+
+    vertexInfo = VertexInfo();
+
 
 }
 
@@ -472,6 +470,10 @@ void Window::createGraphicsPipeline() {
     dynamicState.pDynamicStates    = dynamicStates.data();
 
     vk::PipelineVertexInputStateCreateInfo vertexInput{};
+    vertexInput.vertexBindingDescriptionCount = 1;
+    vertexInput.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertexInfo.attributeDescriptions.size());
+    vertexInput.pVertexBindingDescriptions = &vertexInfo.bindingDescription;
+    vertexInput.pVertexAttributeDescriptions = vertexInfo.attributeDescriptions.data();
 
     vk::PipelineInputAssemblyStateCreateInfo inputAssembly{};
     inputAssembly.topology               = vk::PrimitiveTopology::eTriangleList;
