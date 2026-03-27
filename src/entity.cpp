@@ -3,36 +3,20 @@
 
 #include "Entity.hpp"
 
-Entity::Entity(Window *window, std::vector<Vertex> vertices):vertices(vertices) {
+Entity::Entity(Window *window, std::vector<Vertex> vertices,std::vector<uint16_t> indices):vertices(vertices) , indices(indices) {
     //buffer Size
-    vk::DeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
-
-    //Staging Buffer
-    createBuffer(bufferSize, vk::BufferUsageFlagBits::eTransferSrc, vk::MemoryPropertyFlagBits::eHostVisible
-        | vk::MemoryPropertyFlagBits::eHostCoherent, stagingBuffer, stagingBufferMemory,window);
-
-    void* data;
-    if (window->getDevice()->mapMemory(stagingBufferMemory , 0, bufferSize,{},&data) != vk::Result::eSuccess) {
-        throw std::runtime_error("failed to map vertex buffer memory!") ;
-    }
-    memcpy(data, vertices.data(), (size_t) bufferSize);
-    window->getDevice()->unmapMemory(stagingBufferMemory);
-
-
-
-    createBuffer(bufferSize, vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer,
-    vk::MemoryPropertyFlagBits::eDeviceLocal, vertexBuffer, vertexBufferMemory,window);
-    copyBuffer(stagingBuffer,vertexBuffer,bufferSize,window);
-
-
-    window->getDevice()->destroyBuffer(stagingBuffer,nullptr);
-    window->getDevice()->freeMemory(stagingBufferMemory,nullptr);
+    indexCount = indices.size();
+    createVertexBuffer(window);
+    createIndexBuffer(window);
 }
 
 void Entity::cleanUp(Window *window) {
     window->getDevice()->waitIdle();
     window->getDevice()->destroyBuffer(vertexBuffer);
     window->getDevice()->freeMemory(vertexBufferMemory);
+
+    window->getDevice()->destroyBuffer(indexBuffer);
+    window->getDevice()->freeMemory(indexBufferMemory);
 }
 
 uint32_t Entity::findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties) {
@@ -49,8 +33,12 @@ uint32_t Entity::findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags pro
 void Entity::draw(Window *window) {
     vk::Buffer vertexBuffers[] = {vertexBuffer};
     vk::DeviceSize offsets[] = {0};
+
     window->getCurrentFrameData()->commandBuffer.bindVertexBuffers(0,1,vertexBuffers,offsets);
-    window->getCurrentFrameData()->commandBuffer.draw(3, 1, 0, 0);
+
+    window->getCurrentFrameData()->commandBuffer.bindIndexBuffer(indexBuffer,0,vk::IndexType::eUint16);
+
+    window->getCurrentFrameData()->commandBuffer.drawIndexed(indexCount, 1,0, 0, 0);
 }
 
 void Entity::createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties,
@@ -61,7 +49,7 @@ void Entity::createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::M
     bufferInfo.usage = usage;//VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
     bufferInfo.sharingMode = vk::SharingMode::eExclusive;
 
-    vertexCount = vertices.size();
+
 
     if (window->getDevice()->createBuffer(&bufferInfo, nullptr, &buffer) != vk::Result::eSuccess) {
         throw std::runtime_error("failed to create vertex buffer!");
@@ -111,4 +99,58 @@ void Entity::copyBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::DeviceSi
     window->getDevice()->resetCommandPool(copyCommandPool,{});
     window->getDevice()->freeCommandBuffers(copyCommandPool,1,copyCommandBuffer.data());
     window->getDevice()->destroyCommandPool(copyCommandPool);
+}
+
+void Entity::createVertexBuffer(Window* window) {
+    vk::DeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
+
+    //Staging Buffer
+    vk::Buffer stagingBuffer{};
+    vk::DeviceMemory stagingBufferMemory{};
+    createBuffer(bufferSize, vk::BufferUsageFlagBits::eTransferSrc, vk::MemoryPropertyFlagBits::eHostVisible
+        | vk::MemoryPropertyFlagBits::eHostCoherent, stagingBuffer, stagingBufferMemory,window);
+
+    void* data;
+    if (window->getDevice()->mapMemory(stagingBufferMemory , 0, bufferSize,{},&data) != vk::Result::eSuccess) {
+        throw std::runtime_error("failed to map vertex buffer memory!") ;
+    }
+    memcpy(data, vertices.data(), (size_t) bufferSize);
+    window->getDevice()->unmapMemory(stagingBufferMemory);
+
+
+
+    createBuffer(bufferSize, vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer,
+    vk::MemoryPropertyFlagBits::eDeviceLocal, vertexBuffer, vertexBufferMemory,window);
+    copyBuffer(stagingBuffer,vertexBuffer,bufferSize,window);
+
+
+    window->getDevice()->destroyBuffer(stagingBuffer,nullptr);
+    window->getDevice()->freeMemory(stagingBufferMemory,nullptr);
+}
+
+void Entity::createIndexBuffer(Window* window) {
+    vk::DeviceSize bufferSize = sizeof(indices[0]) * indices.size();
+    vk::Buffer stagingBuffer;
+    vk::DeviceMemory stagingBufferMemory;
+    createBuffer(bufferSize, vk::BufferUsageFlagBits::eTransferSrc, vk::MemoryPropertyFlagBits::eHostVisible
+        | vk::MemoryPropertyFlagBits::eHostCoherent, stagingBuffer, stagingBufferMemory,window);
+
+    void* data;
+    if (window->getDevice()->mapMemory(stagingBufferMemory , 0, bufferSize,{},&data) != vk::Result::eSuccess) {
+        throw std::runtime_error("failed to map vertex buffer memory!") ;
+    }
+
+    memcpy(data, indices.data(), (size_t) bufferSize);
+    window->getDevice()->unmapMemory(stagingBufferMemory);
+
+
+
+    createBuffer(bufferSize, vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eIndexBuffer,
+    vk::MemoryPropertyFlagBits::eDeviceLocal, indexBuffer, indexBufferMemory,window);
+
+    copyBuffer(stagingBuffer,indexBuffer,bufferSize,window);
+
+
+    window->getDevice()->destroyBuffer(stagingBuffer,nullptr);
+    window->getDevice()->freeMemory(stagingBufferMemory,nullptr);
 }
