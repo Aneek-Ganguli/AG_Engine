@@ -7,9 +7,11 @@ public:
     Entity(Window* window,std::vector<Vertex> vertices);
     Entity(){}
     void cleanUp(Window* window);
-    vk::Buffer vertexBuffer;
 
     void draw(Window* window);
+
+    vk::Buffer vertexBuffer;
+
 
 private:
     uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties);
@@ -17,4 +19,5 @@ private:
     vk::PhysicalDeviceMemoryProperties memProperties;
     vk::MemoryRequirements memRequirements;
     vk::DeviceMemory vertexBufferMemory;
+    uint32_t vertexCount;
 };

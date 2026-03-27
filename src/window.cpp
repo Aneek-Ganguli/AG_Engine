@@ -666,11 +666,6 @@ void Window::startFrame() {
 
 }
 
-void Window::doWhileRendering(void(*func_ptr)(vk::CommandBuffer)) {
-    func_ptr(currentFrameData->commandBuffer);
-}
-
-
 void Window::endFrame() {
 
     currentFrameData->commandBuffer.endRendering();

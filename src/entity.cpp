@@ -9,6 +9,8 @@ Entity::Entity(Window *window, std::vector<Vertex> vertices):vertices(vertices) 
     bufferInfo.usage = vk::BufferUsageFlagBits::eVertexBuffer;//VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
     bufferInfo.sharingMode = vk::SharingMode::eExclusive;
 
+    vertexCount = vertices.size();
+
     if (window->getDevice()->createBuffer(&bufferInfo, nullptr, &vertexBuffer) != vk::Result::eSuccess) {
         throw std::runtime_error("failed to create vertex buffer!");
     }
@@ -50,4 +52,10 @@ uint32_t Entity::findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags pro
     throw std::runtime_error("failed to find suitable memory type!");
 }
 
-// void dr
+
+void Entity::draw(Window *window) {
+    vk::Buffer vertexBuffers[] = {vertexBuffer};
+    vk::DeviceSize offsets[] = {0};
+    window->getCurrentFrameData()->commandBuffer.bindVertexBuffers(0,1,vertexBuffers,offsets);
+    window->getCurrentFrameData()->commandBuffer.draw(3, 1, 0, 0);
+}

@@ -28,10 +28,11 @@ public:
     void startFrame();
     void endFrame();
 
-    void doWhileRendering(void(*func_ptr)(vk::CommandBuffer));
+    PerFrameData* getCurrentFrameData(){return currentFrameData;}
 
     vk::Device* getDevice(){return &device;}
     vk::PhysicalDevice* getPhysicalDevice(){return &physicalDevice;}
+
 
 private:
     const char* title;
