@@ -11,7 +11,8 @@ public:
     void draw(Window* window);
 
     vk::Buffer vertexBuffer;
-
+    vk::Buffer stagingBuffer{};
+    vk::DeviceMemory stagingBufferMemory{};
 
 private:
     uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties);
@@ -20,4 +21,7 @@ private:
     vk::MemoryRequirements memRequirements;
     vk::DeviceMemory vertexBufferMemory;
     uint32_t vertexCount;
+    void createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties, vk::Buffer& buffer,
+        vk::DeviceMemory& bufferMemory,Window* window);
+    void copyBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::DeviceSize size,Window* window);
 };

@@ -33,6 +33,10 @@ public:
     vk::Device* getDevice(){return &device;}
     vk::PhysicalDevice* getPhysicalDevice(){return &physicalDevice;}
 
+    vk::CommandPool createCommandPool();
+    std::vector<vk::CommandBuffer> createCommandBuffer(vk::CommandPool commandPool);
+
+    vk::Queue* getGraphicsQueue(){return &queue;}
 
 private:
     const char* title;
@@ -51,8 +55,6 @@ private:
     void createDevice();
     void createSwapchain();
     vk::Fence createFence();
-    vk::CommandPool createCommandPool();
-    std::vector<vk::CommandBuffer> createCommandBuffer(vk::CommandPool commandPool);
     uint32_t physicalDeviceCount{};
     vk::PhysicalDeviceProperties properties{};
     vk::PhysicalDevice physicalDevice{};
@@ -66,8 +68,6 @@ private:
     std::vector<vk::Image> images{};
     std::vector<vk::Semaphore> imagePresentSemaphore{};
     std::vector<vk::ImageView> imageViews{};
-    // std::vector<vk::ImageView> imageViews;
-
 
     uint32_t queueFamilyIndex;
 
