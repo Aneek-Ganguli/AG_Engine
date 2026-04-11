@@ -15,7 +15,8 @@
 #endif
 
 static constexpr uint32_t NUM_FRAMES_IN_FLIGHT = 2u,NUM_SWAPCHAIN_IMAGES = 3u;
-
+uint8_t static frameIndex = 0u;
+static int width, height;
 class Window {
 public:
     Window(const char *p_title, int width, int p_height);
@@ -38,9 +39,12 @@ public:
 
     vk::Queue* getGraphicsQueue(){return &queue;}
 
+    vk::DescriptorSetLayout getDescriptorSetLayout(){return descriptorSetLayout;}
+
+    vk::PipelineLayout getPipelineLayout(){return pipelineLayout;}
+
 private:
     const char* title;
-    int width, height;
     GLFWwindow* window{};
     Logger logger;
     vk::Instance instance{};
@@ -61,7 +65,7 @@ private:
     vk::Device device{};
     vk::Queue queue{};
     vk::Semaphore presentSemaphore{};
-
+    uint32_t  imageIndex = 0;
     vk::SurfaceFormatKHR actualSurfaceFormat{};
     //Swapchain
     vk::SwapchainKHR handle{};
@@ -71,11 +75,10 @@ private:
 
     uint32_t queueFamilyIndex;
 
-    uint32_t imageIndex = 0;
 
     PerFrameData frameData[NUM_FRAMES_IN_FLIGHT]{};
     PerFrameData* currentFrameData = nullptr;
-    uint8_t frameIndex = 0u;
+
 
     void createFrameData();
     void destroyFrameData();
@@ -87,8 +90,12 @@ private:
     vk::ShaderModule fragmentShader{};
     void createShaderModules();
 
+    vk::DescriptorSetLayout descriptorSetLayout{};
     vk::PipelineLayout pipelineLayout;
 
     VertexInfo vertexInfo{};
+
+    vk::DescriptorSetLayoutBinding uboLayoutBinding{};
+    void createDescriptorSetLayout();
 };
 

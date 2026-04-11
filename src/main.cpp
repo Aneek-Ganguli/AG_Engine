@@ -27,6 +27,7 @@ int main() {
 
         window.startFrame();
 
+        entity.updateUniformBuffer(frameIndex);
         entity.draw(&window);
 
         window.endFrame();

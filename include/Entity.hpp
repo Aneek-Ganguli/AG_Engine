@@ -16,6 +16,11 @@ public:
     vk::DeviceMemory indexBufferMemory;
 
 
+    std::vector<vk::Buffer> uniformBuffers;
+    std::vector<vk::DeviceMemory> uniformBuffersMemory;
+    std::vector<void*> uniformBuffersMapped;
+    void updateUniformBuffer(uint32_t currentImage);
+
 private:
     uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties);
     std::vector<Vertex> vertices;
@@ -30,4 +35,14 @@ private:
     void createVertexBuffer(Window* window);
 
     void createIndexBuffer(Window* window);
+
+    void createUniformBuffers(Window* window);
+
+
+
+    vk::DescriptorPool descriptorPool;
+    void createDescriptorPool(Window* window);
+
+    std::vector<vk::DescriptorSet> descriptorSets;
+    void createDescriptorSets(Window* window);
 };

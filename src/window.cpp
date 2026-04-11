@@ -225,7 +225,23 @@ void Window::createFrameData() {
     }
 }
 
+void Window::createDescriptorSetLayout() {
+    uboLayoutBinding.binding = 0;
+    uboLayoutBinding.descriptorType = vk::DescriptorType::eUniformBuffer;
+    uboLayoutBinding.descriptorCount = 1;
+    uboLayoutBinding.stageFlags = vk::ShaderStageFlagBits::eVertex;
 
+    vk::DescriptorSetLayoutCreateInfo layoutInfo{};
+    layoutInfo.bindingCount = 1;
+    layoutInfo.pBindings = &uboLayoutBinding;
+
+    if (device.createDescriptorSetLayout(&layoutInfo, nullptr, &descriptorSetLayout) != vk::Result::eSuccess) {
+        throw std::runtime_error("failed to create descriptor set layout!");
+    }
+
+
+
+}
 
 void Window::destroyFrameData() {
     for (auto& e : frameData) {
@@ -236,8 +252,9 @@ void Window::destroyFrameData() {
 }
 
 
-Window::Window(const char* p_title,int p_width,int p_height):title(p_title),width(p_width),height(p_height),logger() {
-
+Window::Window(const char* p_title,int p_width,int p_height):title(p_title),logger() {
+    width = p_width;
+    height = p_height;
 
     uint32_t version = VK_MAKE_API_VERSION(0,1,0,0);
     vkEnumerateInstanceVersion(&version);
@@ -298,6 +315,7 @@ Window::Window(const char* p_title,int p_width,int p_height):title(p_title),widt
     createFrameData();
 
     createShaderModules();
+    createDescriptorSetLayout();
     createGraphicsPipeline();
 
     vertexInfo = VertexInfo();
@@ -330,12 +348,14 @@ void Window::cleanUp() {
     device.destroyShaderModule(vertexShader,nullptr);
     device.destroyShaderModule(fragmentShader,nullptr);
 
+    device.destroyDescriptorSetLayout(descriptorSetLayout);
 
     // Swapchain
     device.destroySwapchainKHR(handle);
 
     device.destroyPipelineLayout(pipelineLayout);
     device.destroyPipeline(graphicsPipeline);
+
 
 
     // Device
@@ -508,6 +528,8 @@ void Window::createGraphicsPipeline() {
     colorBlending.pAttachments    = &colorBlendAttachment; // safe, both local
 
     vk::PipelineLayoutCreateInfo layoutInfo{};
+    layoutInfo.setLayoutCount = 1;
+    layoutInfo.pSetLayouts = &descriptorSetLayout;
     if (device.createPipelineLayout(&layoutInfo, nullptr, &pipelineLayout) != vk::Result::eSuccess) {
         throw std::runtime_error("failed to create pipeline layout!");
     }

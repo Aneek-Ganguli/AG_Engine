@@ -1,17 +1,35 @@
+#include <chrono>
 #include <iostream>
 #include <ostream>
 
-#include "Entity.hpp"
+#define GLM_FORCE_RADIANS
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
+#include "Entity.hpp"
+#include "UBO.hpp"
+
+#define DEVICE window->getDevice()
 Entity::Entity(Window *window, std::vector<Vertex> vertices,std::vector<uint16_t> indices):vertices(vertices) , indices(indices) {
     //buffer Size
     indexCount = indices.size();
     createVertexBuffer(window);
     createIndexBuffer(window);
+    createUniformBuffers(window);
+    createDescriptorPool(window);
+    createDescriptorSets(window);
 }
 
 void Entity::cleanUp(Window *window) {
     window->getDevice()->waitIdle();
+
+    for (size_t i = 0; i < NUM_FRAMES_IN_FLIGHT; i++) {
+        window->getDevice()->destroyBuffer(uniformBuffers[i]);
+        window->getDevice()->freeMemory(uniformBuffersMemory[i]);
+    }
+
+    DEVICE->destroyDescriptorPool(descriptorPool);
+
     window->getDevice()->destroyBuffer(vertexBuffer);
     window->getDevice()->freeMemory(vertexBufferMemory);
 
@@ -34,10 +52,13 @@ void Entity::draw(Window *window) {
     vk::Buffer vertexBuffers[] = {vertexBuffer};
     vk::DeviceSize offsets[] = {0};
 
+
     window->getCurrentFrameData()->commandBuffer.bindVertexBuffers(0,1,vertexBuffers,offsets);
 
     window->getCurrentFrameData()->commandBuffer.bindIndexBuffer(indexBuffer,0,vk::IndexType::eUint16);
 
+    window->getCurrentFrameData()->commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
+        window->getPipelineLayout(), 0, 1, &descriptorSets[frameIndex], 0, nullptr);
     window->getCurrentFrameData()->commandBuffer.drawIndexed(indexCount, 1,0, 0, 0);
 }
 
@@ -153,4 +174,84 @@ void Entity::createIndexBuffer(Window* window) {
 
     window->getDevice()->destroyBuffer(stagingBuffer,nullptr);
     window->getDevice()->freeMemory(stagingBufferMemory,nullptr);
+}
+
+void Entity::createUniformBuffers(Window* window) {
+    vk::DeviceSize  bufferSize = sizeof(UBO);
+
+    uniformBuffers.resize(NUM_FRAMES_IN_FLIGHT);
+    uniformBuffersMemory.resize(NUM_FRAMES_IN_FLIGHT);
+    uniformBuffersMapped.resize(NUM_FRAMES_IN_FLIGHT);
+
+    for (size_t i = 0; i < NUM_FRAMES_IN_FLIGHT; i++) {
+        createBuffer(bufferSize, vk::BufferUsageFlagBits::eUniformBuffer,
+            vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, uniformBuffers[i], uniformBuffersMemory[i],window);
+
+        if (window->getDevice()->mapMemory(uniformBuffersMemory[i],0,bufferSize,{},&uniformBuffersMapped[i]) != vk::Result::eSuccess) {
+            throw std::runtime_error("failed to map uniform buffer memory!") ;
+        }
+    }
+}
+
+void Entity::updateUniformBuffer(uint32_t currentImage) {
+    static auto startTime = std::chrono::high_resolution_clock::now();
+
+    auto currentTime = std::chrono::high_resolution_clock::now();
+    float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+
+    UBO ubo{};
+    ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
+    ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    ubo.proj = glm::perspective(glm::radians(45.0f), 800 / (float) 600, 0.1f, 10.0f);
+
+    ubo.proj[1][1] *= -1;
+    memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
+}
+
+void Entity::createDescriptorPool(Window* window) {
+    vk::DescriptorPoolSize poolSize{};
+    poolSize.type = vk::DescriptorType::eUniformBuffer;
+    poolSize.descriptorCount = static_cast<uint32_t>(NUM_FRAMES_IN_FLIGHT);
+
+    vk::DescriptorPoolCreateInfo poolInfo{};
+    poolInfo.poolSizeCount = 1;
+    poolInfo.pPoolSizes = &poolSize;
+    poolInfo.maxSets = static_cast<uint32_t>(NUM_FRAMES_IN_FLIGHT);
+
+    if (DEVICE->createDescriptorPool(&poolInfo, nullptr, &descriptorPool) != vk::Result::eSuccess) {
+        throw std::runtime_error("failed to create descriptor pool!");
+    }
+}
+
+void Entity::createDescriptorSets(Window* window) {
+    std::vector<vk::DescriptorSetLayout> layouts(NUM_FRAMES_IN_FLIGHT, window->getDescriptorSetLayout());
+    vk::DescriptorSetAllocateInfo allocInfo{};
+    allocInfo.descriptorPool = descriptorPool;
+    allocInfo.descriptorSetCount = static_cast<uint32_t>(NUM_FRAMES_IN_FLIGHT);
+    allocInfo.pSetLayouts = layouts.data();
+
+    descriptorSets.resize(NUM_FRAMES_IN_FLIGHT);
+    if (DEVICE->allocateDescriptorSets(&allocInfo, descriptorSets.data()) != vk::Result::eSuccess) {
+        throw std::runtime_error("failed to allocate descriptor sets!");
+    }
+
+    for (size_t i = 0; i < NUM_FRAMES_IN_FLIGHT; i++) {
+        vk::DescriptorBufferInfo bufferInfo{};
+        bufferInfo.buffer = uniformBuffers[i];
+        bufferInfo.offset = 0;
+        bufferInfo.range = sizeof(UBO);
+
+        vk::WriteDescriptorSet descriptorWrite{};
+        descriptorWrite.dstSet = descriptorSets[i];
+        descriptorWrite.dstBinding = 0;
+        descriptorWrite.dstArrayElement = 0;
+        descriptorWrite.descriptorType = vk::DescriptorType::eUniformBuffer ;
+        descriptorWrite.descriptorCount = 1;
+        descriptorWrite.pBufferInfo = &bufferInfo;
+        descriptorWrite.pImageInfo = nullptr; // Optional
+        descriptorWrite.pTexelBufferView = nullptr; // Optional
+
+        DEVICE->updateDescriptorSets(1, &descriptorWrite, 0, nullptr);
+    }
 }
