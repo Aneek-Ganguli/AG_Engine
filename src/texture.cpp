@@ -138,6 +138,7 @@ void Texture::copyBufferToImage(vk::Buffer buffer, vk::Image image,
 // ---------------------------------------------------------------------------
 Texture::Texture(const char* texturePath, Window* window) {
     // 1. Load pixels from disk
+    stbi_set_flip_vertically_on_load(true);
     pixels = stbi_load(texturePath, &width, &height, &textureChannels, STBI_rgb_alpha);
     size   = width * height * 4;
 
