@@ -8,9 +8,10 @@
 
 #include "Entity.hpp"
 #include "UBO.hpp"
+#include "Texture.hpp"
 
 #define DEVICE window->getDevice()
-Entity::Entity(Window *window, std::vector<Vertex> vertices,std::vector<uint16_t> indices):vertices(vertices) , indices(indices) {
+Entity::Entity(Window* window,std::vector<Vertex> vertices,std::vector<uint16_t> indices,Texture* p_texture):vertices(vertices) , indices(indices),texture(p_texture){
     //buffer Size
     indexCount = indices.size();
     createVertexBuffer(window);
@@ -37,7 +38,9 @@ void Entity::cleanUp(Window *window) {
     window->getDevice()->freeMemory(indexBufferMemory);
 }
 
-uint32_t Entity::findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties) {
+uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties,Window* window) {
+    vk::PhysicalDeviceMemoryProperties memProperties;
+    window->getPhysicalDevice()->getMemoryProperties(&memProperties);
     for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
         if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
             return i;
@@ -62,7 +65,7 @@ void Entity::draw(Window *window) {
     window->getCurrentFrameData()->commandBuffer.drawIndexed(indexCount, 1,0, 0, 0);
 }
 
-void Entity::createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties,
+void createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties,
     vk::Buffer& buffer,vk::DeviceMemory& bufferMemory,Window* window) {
 
     vk::BufferCreateInfo bufferInfo{};
@@ -76,13 +79,16 @@ void Entity::createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::M
         throw std::runtime_error("failed to create vertex buffer!");
     }
 
+    vk::PhysicalDeviceMemoryProperties memProperties;
+    vk::MemoryRequirements memRequirements;
+    window->getPhysicalDevice()->getMemoryProperties(&memProperties);
     window->getDevice()->getBufferMemoryRequirements( buffer, &memRequirements);
     window->getPhysicalDevice()->getMemoryProperties(&memProperties);
 
     vk::MemoryAllocateInfo allocInfo{};
     allocInfo.allocationSize = memRequirements.size;
     allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits,
-        properties);
+        properties,window);
 
     if (window->getDevice()->allocateMemory( &allocInfo, nullptr, &bufferMemory) != vk::Result::eSuccess) {
         throw std::runtime_error("failed to allocate vertex buffer memory!");
@@ -210,13 +216,15 @@ void Entity::updateUniformBuffer(uint32_t currentImage) {
 }
 
 void Entity::createDescriptorPool(Window* window) {
-    vk::DescriptorPoolSize poolSize{};
-    poolSize.type = vk::DescriptorType::eUniformBuffer;
-    poolSize.descriptorCount = static_cast<uint32_t>(NUM_FRAMES_IN_FLIGHT);
+    std::array<vk::DescriptorPoolSize, 2> poolSizes{};
+    poolSizes[0].type = vk::DescriptorType::eUniformBuffer;
+    poolSizes[0].descriptorCount = static_cast<uint32_t>(NUM_FRAMES_IN_FLIGHT);
+    poolSizes[1].type = vk::DescriptorType::eCombinedImageSampler;
+    poolSizes[1].descriptorCount = static_cast<uint32_t>(NUM_FRAMES_IN_FLIGHT);
 
     vk::DescriptorPoolCreateInfo poolInfo{};
-    poolInfo.poolSizeCount = 1;
-    poolInfo.pPoolSizes = &poolSize;
+    poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
+    poolInfo.pPoolSizes = poolSizes.data();
     poolInfo.maxSets = static_cast<uint32_t>(NUM_FRAMES_IN_FLIGHT);
 
     if (DEVICE->createDescriptorPool(&poolInfo, nullptr, &descriptorPool) != vk::Result::eSuccess) {
@@ -242,16 +250,35 @@ void Entity::createDescriptorSets(Window* window) {
         bufferInfo.offset = 0;
         bufferInfo.range = sizeof(UBO);
 
-        vk::WriteDescriptorSet descriptorWrite{};
-        descriptorWrite.dstSet = descriptorSets[i];
-        descriptorWrite.dstBinding = 0;
-        descriptorWrite.dstArrayElement = 0;
-        descriptorWrite.descriptorType = vk::DescriptorType::eUniformBuffer ;
-        descriptorWrite.descriptorCount = 1;
-        descriptorWrite.pBufferInfo = &bufferInfo;
-        descriptorWrite.pImageInfo = nullptr; // Optional
-        descriptorWrite.pTexelBufferView = nullptr; // Optional
+        vk::DescriptorImageInfo imageInfo{};
+        imageInfo.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+        imageInfo.imageView = texture->textureImageView;
+        imageInfo.sampler = texture->textureSampler;
 
-        DEVICE->updateDescriptorSets(1, &descriptorWrite, 0, nullptr);
+        // Use vk::WriteDescriptorSet instead of the C struct
+        std::array<vk::WriteDescriptorSet, 2> descriptorWrites{};
+
+        // First descriptor: Uniform Buffer
+        descriptorWrites[0]
+            .setDstSet(descriptorSets[i])
+            .setDstBinding(0)
+            .setDstArrayElement(0)
+            .setDescriptorType(vk::DescriptorType::eUniformBuffer)
+            .setDescriptorCount(1)
+            .setPBufferInfo(&bufferInfo);
+
+        // Second descriptor: Combined Image Sampler
+        descriptorWrites[1]
+            .setDstSet(descriptorSets[i])
+            .setDstBinding(1)
+            .setDstArrayElement(0)
+            .setDescriptorType(vk::DescriptorType::eCombinedImageSampler)
+            .setDescriptorCount(1)
+            .setPImageInfo(&imageInfo);
+
+        // Call the device method directly
+        DEVICE->updateDescriptorSets(descriptorWrites, nullptr);
+
+        // DEVICE->updateDescriptorSets(1, &descriptorWrite, 0, nullptr);
     }
 }

@@ -1,15 +1,21 @@
 #pragma once
 #include "Math.hpp"
 #include "Window.hpp"
+#include "Texture.hpp"
+
+
+void createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties, vk::Buffer& buffer,
+        vk::DeviceMemory& bufferMemory,Window* window);
+    uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties,Window* window);
 
 class Entity {
 public:
-    Entity(Window* window,std::vector<Vertex> vertices,std::vector<uint16_t> indices);
-    Entity(){}
+    Entity(Window* window,std::vector<Vertex> vertices,std::vector<uint16_t> indices,Texture* p_texture);
+    Entity() : texture() {}
+
     void cleanUp(Window* window);
 
     void draw(Window* window);
-
     vk::Buffer vertexBuffer;
     vk::DeviceMemory vertexBufferMemory;
     vk::Buffer indexBuffer;
@@ -22,14 +28,11 @@ public:
     void updateUniformBuffer(uint32_t currentImage);
 
 private:
-    uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties);
     std::vector<Vertex> vertices;
     std::vector<uint16_t> indices;
     vk::PhysicalDeviceMemoryProperties memProperties;
     vk::MemoryRequirements memRequirements;
     uint32_t indexCount;
-    void createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties, vk::Buffer& buffer,
-        vk::DeviceMemory& bufferMemory,Window* window);
     void copyBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::DeviceSize size,Window* window);
 
     void createVertexBuffer(Window* window);
@@ -39,10 +42,11 @@ private:
     void createUniformBuffers(Window* window);
 
 
-
     vk::DescriptorPool descriptorPool;
     void createDescriptorPool(Window* window);
 
     std::vector<vk::DescriptorSet> descriptorSets;
     void createDescriptorSets(Window* window);
+
+    Texture* texture;
 };
