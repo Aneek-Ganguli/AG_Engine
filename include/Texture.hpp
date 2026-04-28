@@ -10,6 +10,11 @@ public:
     Texture() = default;
 
     void cleanUp(Window* window);
+    static void createImage(uint32_t width, uint32_t height, vk::Format format,
+        vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::MemoryPropertyFlags properties, vk::Image& image,
+        vk::DeviceMemory& imageMemory,vk::Device* device,vk::PhysicalDevice* physicalDevice);
+
+    static void createImageView(vk::Device* device,vk::Image &textureImage,vk::ImageView &textureImageView,vk::Format format,vk::ImageAspectFlags aspectFlags);
 // private:
     stbi_uc* pixels{};
     vk::DeviceSize size;
@@ -20,9 +25,6 @@ public:
     vk::Image textureImage;
     vk::DeviceMemory textureImageMemory;
 
-    void createImage(uint32_t width, uint32_t height, vk::Format format,
-        vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::MemoryPropertyFlags properties, vk::Image& image,
-        vk::DeviceMemory& imageMemory,Window* window);
 
     void transitionImageLayout(vk::Image image, vk::Format format,
                            vk::ImageLayout oldLayout, vk::ImageLayout newLayout,
@@ -33,6 +35,6 @@ public:
     vk::ImageView  textureImageView;
     vk::Sampler    textureSampler;
 
-    void createTextureImageView(Window* window);
+
     void createTextureSampler(Window* window);
 };

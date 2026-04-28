@@ -138,7 +138,7 @@ void Texture::copyBufferToImage(vk::Buffer buffer, vk::Image image,
 // ---------------------------------------------------------------------------
 Texture::Texture(const char* texturePath, Window* window) {
     // 1. Load pixels from disk
-    stbi_set_flip_vertically_on_load(true);
+    // stbi_set_flip_vertically_on_load(true);
     pixels = stbi_load(texturePath, &width, &height, &textureChannels, STBI_rgb_alpha);
     size   = width * height * 4;
 
@@ -168,7 +168,7 @@ Texture::Texture(const char* texturePath, Window* window) {
         vk::ImageTiling::eOptimal,
         vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
         vk::MemoryPropertyFlagBits::eDeviceLocal,
-        textureImage, textureImageMemory, window);
+        textureImage, textureImageMemory, window->getDevice(),window->getPhysicalDevice());
 
     // 4. Transition: Undefined → TransferDstOptimal
     transitionImageLayout(textureImage,
@@ -195,7 +195,7 @@ Texture::Texture(const char* texturePath, Window* window) {
     DEVICE->freeMemory(stagingBufferMemory, nullptr);
 
     // 8. Create image view so shaders can sample the texture
-    createTextureImageView(window);
+    createImageView(window->getDevice(),textureImage,textureImageView,vk::Format::eR8G8B8A8Srgb,vk::ImageAspectFlagBits::eColor);
 
     // 9. Create sampler (filtering, addressing modes, anisotropy)
     createTextureSampler(window);
@@ -209,7 +209,7 @@ void Texture::createImage(uint32_t width, uint32_t height,
                           vk::ImageUsageFlags usage,
                           vk::MemoryPropertyFlags properties,
                           vk::Image& image, vk::DeviceMemory& imageMemory,
-                          Window* window)
+                          vk::Device* device,vk::PhysicalDevice* physicalDevice)
 {
     vk::ImageCreateInfo imageInfo{};
     imageInfo.imageType             = vk::ImageType::e2D;
@@ -226,36 +226,37 @@ void Texture::createImage(uint32_t width, uint32_t height,
     imageInfo.sharingMode           = vk::SharingMode::eExclusive;
 
     // BUG FIX: was using textureImage/textureImageMemory directly; now uses params
-    if (DEVICE->createImage(&imageInfo, nullptr, &image) != vk::Result::eSuccess) {
+    if (device->createImage(&imageInfo, nullptr, &image) != vk::Result::eSuccess) {
         throw std::runtime_error("failed to create image!");
     }
 
     vk::MemoryRequirements memRequirements;
-    DEVICE->getImageMemoryRequirements(image, &memRequirements);
+    device->getImageMemoryRequirements(image, &memRequirements);
 
     vk::MemoryAllocateInfo allocInfo{};
     allocInfo.allocationSize  = memRequirements.size;
-    allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties, window);
+    allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties, physicalDevice);
 
-    if (DEVICE->allocateMemory(&allocInfo, nullptr, &imageMemory) != vk::Result::eSuccess) {
+    if (device->allocateMemory(&allocInfo, nullptr, &imageMemory) != vk::Result::eSuccess) {
         throw std::runtime_error("failed to allocate image memory!");
     }
 
-    DEVICE->bindImageMemory(image, imageMemory, 0);
+    device->bindImageMemory(image, imageMemory, 0);
 }
 
 // ---------------------------------------------------------------------------
 // createTextureImageView
 // Creates a VkImageView for the texture so shaders can sample it.
 // ---------------------------------------------------------------------------
-void Texture::createTextureImageView(Window* window) {
+void Texture::createImageView(vk::Device* device,vk::Image &textureImage,vk::ImageView &textureImageView,vk::Format format,vk::ImageAspectFlags aspectFlags) {
     vk::ImageViewCreateInfo viewInfo{};
     viewInfo.image    = textureImage;
     viewInfo.viewType = vk::ImageViewType::e2D;
-    viewInfo.format   = vk::Format::eR8G8B8A8Srgb;
+    viewInfo.format   = format;
+    viewInfo.subresourceRange.aspectMask = aspectFlags;
 
     // Which aspect of the image (color, depth, stencil…)
-    viewInfo.subresourceRange.aspectMask     = vk::ImageAspectFlagBits::eColor;
+    viewInfo.subresourceRange.aspectMask     = aspectFlags;
     viewInfo.subresourceRange.baseMipLevel   = 0;
     viewInfo.subresourceRange.levelCount     = 1;
     viewInfo.subresourceRange.baseArrayLayer = 0;
@@ -263,7 +264,7 @@ void Texture::createTextureImageView(Window* window) {
 
     // components left at default (eIdentity == 0 for all channels)
 
-    if (DEVICE->createImageView(&viewInfo, nullptr, &textureImageView) != vk::Result::eSuccess) {
+    if (device->createImageView(&viewInfo, nullptr, &textureImageView) != vk::Result::eSuccess) {
         throw std::runtime_error("failed to create texture image view!");
     }
 }

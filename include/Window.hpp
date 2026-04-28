@@ -4,6 +4,7 @@
 
 #include  <vulkan/vulkan.hpp>
 
+#include "DepthBuffer.hpp"
 #include "Logger.hpp"
 #include "PerFrameData.hpp"
 #include "VertexInfo.hpp"
@@ -16,7 +17,7 @@
 
 static constexpr uint32_t NUM_FRAMES_IN_FLIGHT = 2u,NUM_SWAPCHAIN_IMAGES = 3u;
 uint8_t static frameIndex = 0u;
-static int width, height;
+static int windowWidth, windowHeight;
 class Window {
 public:
     Window(const char *p_title, int width, int p_height);
@@ -42,6 +43,10 @@ public:
     vk::DescriptorSetLayout getDescriptorSetLayout(){return descriptorSetLayout;}
 
     vk::PipelineLayout getPipelineLayout(){return pipelineLayout;}
+
+    // Window.hpp — add getter
+    int getWidth()  { return windowWidth; }
+    int getHeight() { return windowHeight; }
 
 private:
     const char* title;
@@ -97,5 +102,13 @@ private:
 
     vk::DescriptorSetLayoutBinding uboLayoutBinding{};
     void createDescriptorSetLayout();
+
+    std::vector<vk::Framebuffer> framebuffers;
+    void createFramebuffers();
+
+    vk::RenderPass renderPass;
+    void createRenderPass();
+
+    DepthBuffer depthBuffer;
 };
 

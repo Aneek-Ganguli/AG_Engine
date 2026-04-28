@@ -3,6 +3,7 @@
 #include <ostream>
 
 #define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -14,16 +15,19 @@
 Entity::Entity(Window* window,std::vector<Vertex> vertices,std::vector<uint16_t> indices,Texture* p_texture):vertices(vertices) , indices(indices),texture(p_texture){
     //buffer Size
     indexCount = indices.size();
+    // depthBuffer = DepthBuffer(window->getDevice(),window->getPhysicalDevice(), windowWidth, windowHeight);
     createVertexBuffer(window);
     createIndexBuffer(window);
     createUniformBuffers(window);
     createDescriptorPool(window);
     createDescriptorSets(window);
+
 }
 
 void Entity::cleanUp(Window *window) {
     window->getDevice()->waitIdle();
 
+    // depthBuffer.cleanUp(window->getDevice());
     for (size_t i = 0; i < NUM_FRAMES_IN_FLIGHT; i++) {
         window->getDevice()->destroyBuffer(uniformBuffers[i]);
         window->getDevice()->freeMemory(uniformBuffersMemory[i]);
@@ -38,9 +42,9 @@ void Entity::cleanUp(Window *window) {
     window->getDevice()->freeMemory(indexBufferMemory);
 }
 
-uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties,Window* window) {
+uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties,vk::PhysicalDevice* physicalDevice) {
     vk::PhysicalDeviceMemoryProperties memProperties;
-    window->getPhysicalDevice()->getMemoryProperties(&memProperties);
+    physicalDevice->getMemoryProperties(&memProperties);
     for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
         if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
             return i;
@@ -53,7 +57,7 @@ uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties,
 
 void Entity::draw(Window *window) {
     vk::Buffer vertexBuffers[] = {vertexBuffer};
-    vk::DeviceSize offsets[] = {0};
+    vk::DeviceSize offsets[] = {    0};
 
 
     window->getCurrentFrameData()->commandBuffer.bindVertexBuffers(0,1,vertexBuffers,offsets);
@@ -88,7 +92,7 @@ void createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPro
     vk::MemoryAllocateInfo allocInfo{};
     allocInfo.allocationSize = memRequirements.size;
     allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits,
-        properties,window);
+        properties,window->getPhysicalDevice());
 
     if (window->getDevice()->allocateMemory( &allocInfo, nullptr, &bufferMemory) != vk::Result::eSuccess) {
         throw std::runtime_error("failed to allocate vertex buffer memory!");
@@ -213,7 +217,7 @@ void Entity::updateUniformBuffer(uint32_t currentImage) {
     ubo.proj = glm::perspective(glm::radians(45.0f), 800 / (float)600, 0.1f, 10.0f);
 
     // Vulkan flip (GLM was designed for OpenGL where Y is up, Vulkan Y is down)
-    ubo.proj[1][1] *= -1;
+    // ubo.proj[1][1] *= -1;
 
     memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
 }

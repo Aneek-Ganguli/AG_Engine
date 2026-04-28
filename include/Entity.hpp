@@ -1,4 +1,5 @@
 #pragma once
+#include "DepthBuffer.hpp"
 #include "Math.hpp"
 #include "Window.hpp"
 #include "Texture.hpp"
@@ -6,7 +7,7 @@
 
 void createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties, vk::Buffer& buffer,
         vk::DeviceMemory& bufferMemory,Window* window);
-    uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties,Window* window);
+    uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties,vk::PhysicalDevice* physicalDevice);
 
 class Entity {
 public:
@@ -49,4 +50,5 @@ private:
     void createDescriptorSets(Window* window);
 
     Texture* texture;
+    // DepthBuffer depthBuffer;
 };
