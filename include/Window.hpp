@@ -45,9 +45,7 @@ public:
     vk::PipelineLayout getPipelineLayout(){return pipelineLayout;}
 
     // Window.hpp — add getter
-    int getWidth()  { return windowWidth; }
-    int getHeight() { return windowHeight; }
-
+    int width,height;
 private:
     const char* title;
     GLFWwindow* window{};

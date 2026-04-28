@@ -98,6 +98,8 @@ void createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPro
         throw std::runtime_error("failed to allocate vertex buffer memory!");
     }
     window->getDevice()->bindBufferMemory(buffer, bufferMemory, 0);
+    windowWidth = window->width;
+    windowHeight = window->height;
 }
 
 void Entity::copyBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::DeviceSize size,Window* window) {
@@ -205,19 +207,14 @@ void Entity::createUniformBuffers(Window* window) {
 
 void Entity::updateUniformBuffer(uint32_t currentImage) {
     UBO ubo{};
-
-    // Setting to identity matrix (no rotation, no scale, no translation)
     ubo.model = glm::mat4(1.0f);
+    ubo.view = glm::lookAt(glm::vec3(0.0f, 0.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
-    // Camera stays at (2,2,2) looking at the origin (0,0,0)
-    // Up vector is (0,1,0) - Y-up is standard for GLM
-    ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    // Use actual window dimensions from the Window class
+    float aspect = windowWidth / (float)windowHeight;
+    ubo.proj = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 10.0f);
 
-    // Perspective calc
-    ubo.proj = glm::perspective(glm::radians(45.0f), 800 / (float)600, 0.1f, 10.0f);
-
-    // Vulkan flip (GLM was designed for OpenGL where Y is up, Vulkan Y is down)
-    // ubo.proj[1][1] *= -1;
+    // ubo.proj[1][1] *= -1; // Keep this for Vulkan Y-axis
 
     memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
 }

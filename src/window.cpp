@@ -314,8 +314,12 @@ void Window::destroyFrameData() {
 }
 
 Window::Window(const char* p_title, int p_width, int p_height) : title(p_title), logger() {
+    width  = p_width;
+    height = p_height;
     windowWidth  = p_width;
     windowHeight = p_height;
+
+
 
     uint32_t version = VK_MAKE_API_VERSION(0, 1, 0, 0);
     vkEnumerateInstanceVersion(&version);
@@ -530,7 +534,7 @@ void Window::createGraphicsPipeline() {
     rasterizer.rasterizerDiscardEnable = vk::False;
     rasterizer.polygonMode             = vk::PolygonMode::eFill;
     rasterizer.cullMode                = vk::CullModeFlagBits::eNone;
-    rasterizer.frontFace               = vk::FrontFace::eClockwise;
+    rasterizer.frontFace               = vk::FrontFace::eCounterClockwise;
     rasterizer.depthBiasEnable         = vk::False;
     rasterizer.lineWidth               = 1.0f;
 
