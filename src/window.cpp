@@ -534,7 +534,7 @@ void Window::createGraphicsPipeline() {
     rasterizer.rasterizerDiscardEnable = vk::False;
     rasterizer.polygonMode             = vk::PolygonMode::eFill;
     rasterizer.cullMode                = vk::CullModeFlagBits::eNone;
-    rasterizer.frontFace               = vk::FrontFace::eCounterClockwise;
+    rasterizer.frontFace               = vk::FrontFace::eClockwise;
     rasterizer.depthBiasEnable         = vk::False;
     rasterizer.lineWidth               = 1.0f;
 

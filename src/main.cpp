@@ -5,6 +5,9 @@
 
 #include "Entity.hpp"
 
+#include <glm/gtc/matrix_transform.hpp>
+
+
 int main() {
     std::cout << "Hello World!" << std::endl;
 
@@ -33,10 +36,19 @@ int main() {
         4, 5, 6, 6, 7, 4
     };
 
+    std::vector<ImageData> imageData{};
+    Model model;
+    for (int i = 0; i < vertices.size(); i++) {
+        model.vertices.push_back(vertices[i].pos);
+        imageData.push_back({vertices[i].color, vertices[i].texCoord});
+    }
+    model.indices = indices;
 
     Texture text("res/resource.jpg",&window);
+    // Texture text{};
     std::cout << "Window Global variables " << windowWidth << " " << windowHeight << std::endl;
-    Entity entity = Entity(&window,vertices,indices,&text);
+    Entity entity(model,imageData,&text,&window);
+    // Entity entity = Entity(&window,vertices,indices,&text);
 
 
 
@@ -45,7 +57,14 @@ int main() {
 
         window.startFrame();
 
-        entity.updateUniformBuffer(frameIndex);
+        UBO ubo{};
+        ubo.model = glm::mat4(1.0f);
+        ubo.view = glm::lookAt(glm::vec3(0.0f, 0.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+
+        // Use actual window dimensions from the Window class
+        float aspect = windowWidth / (float)windowHeight;
+        ubo.proj = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 10.0f);
+        entity.updateUniformBuffer(&ubo,frameIndex);
         entity.draw(&window);
 
         window.endFrame();

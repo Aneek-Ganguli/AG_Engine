@@ -3,15 +3,17 @@
 #include "Math.hpp"
 #include "Window.hpp"
 #include "Texture.hpp"
+#include "UBO.hpp"
 
 
 void createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties, vk::Buffer& buffer,
-        vk::DeviceMemory& bufferMemory,Window* window);
+                  vk::DeviceMemory& bufferMemory,Window* window);
     uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties,vk::PhysicalDevice* physicalDevice);
 
 class Entity {
 public:
     Entity(Window* window,std::vector<Vertex> vertices,std::vector<uint16_t> indices,Texture* p_texture);
+    Entity(Model model,std::vector<ImageData> imageData,Texture* p_texture,Window* window);
     Entity() : texture() {}
 
     void cleanUp(Window* window);
@@ -26,7 +28,7 @@ public:
     std::vector<vk::Buffer> uniformBuffers;
     std::vector<vk::DeviceMemory> uniformBuffersMemory;
     std::vector<void*> uniformBuffersMapped;
-    void updateUniformBuffer(uint32_t currentImage);
+    void updateUniformBuffer(UBO* newUBO,uint32_t currentImage);
 
 private:
     std::vector<Vertex> vertices;

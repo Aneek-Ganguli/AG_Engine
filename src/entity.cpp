@@ -24,6 +24,28 @@ Entity::Entity(Window* window,std::vector<Vertex> vertices,std::vector<uint16_t>
 
 }
 
+Entity::Entity(Model model, std::vector<ImageData> imageData, Texture *p_texture, Window *window):texture(p_texture),indices(model.indices) {
+
+    // buffer Size
+    indexCount = model.indices.size();
+    // indices = model.indices;
+    vertices.reserve(model.vertices.size());
+    for (size_t i = 0; i < model.vertices.size(); i++) {
+        Vertex v;
+        v.pos = model.vertices[i];
+        v.color = imageData[i].color;
+        v.texCoord = imageData[i].texCoord;
+        vertices.push_back(v);
+    }
+    // depthBuffer = DepthBuffer(window->getDevice(),window->getPhysicalDevice(), windowWidth, windowHeight);
+    createVertexBuffer(window);
+    createIndexBuffer(window);
+    createUniformBuffers(window);
+    createDescriptorPool(window);
+    createDescriptorSets(window);
+}
+
+
 void Entity::cleanUp(Window *window) {
     window->getDevice()->waitIdle();
 
@@ -205,7 +227,7 @@ void Entity::createUniformBuffers(Window* window) {
     }
 }
 
-void Entity::updateUniformBuffer(uint32_t currentImage) {
+void Entity::updateUniformBuffer(UBO* newUBO,uint32_t currentImage) {
     UBO ubo{};
     ubo.model = glm::mat4(1.0f);
     ubo.view = glm::lookAt(glm::vec3(0.0f, 0.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -216,7 +238,7 @@ void Entity::updateUniformBuffer(uint32_t currentImage) {
 
     // ubo.proj[1][1] *= -1; // Keep this for Vulkan Y-axis
 
-    memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
+    memcpy(uniformBuffersMapped[currentImage], newUBO, sizeof(*newUBO));
 }
 
 void Entity::createDescriptorPool(Window* window) {

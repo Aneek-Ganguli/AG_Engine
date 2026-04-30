@@ -1,4 +1,7 @@
 #define STB_IMAGE_IMPLEMENTATION
+#include <iostream>
+#include <ostream>
+
 #include "Texture.hpp"
 #include "Entity.hpp"
 
@@ -143,6 +146,7 @@ Texture::Texture(const char* texturePath, Window* window) {
     size   = width * height * 4;
 
     if (!pixels) {
+        std::cout << "Failed to load texture!: " << texturePath << std::endl;
         throw std::runtime_error("failed to load texture image!");
     }
 

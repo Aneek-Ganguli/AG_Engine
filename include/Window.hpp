@@ -97,6 +97,7 @@ private:
     vk::PipelineLayout pipelineLayout;
 
     VertexInfo vertexInfo{};
+    // VertexInfo2 vertexInfo2{};
 
     vk::DescriptorSetLayoutBinding uboLayoutBinding{};
     void createDescriptorSetLayout();
