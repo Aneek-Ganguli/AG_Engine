@@ -6,7 +6,8 @@
 
 #include "DepthBuffer.hpp"
 #include "vertexShader.h"
-#include "fragmentShader.h"
+#include "noTextureFragmentShader.h"
+#include "textureFragmentShader.h"
 
 void glfwErrorCallback(int error, const char* description){
     std::cerr << "[GLFW ERROR] (" << error << "): " << description << std::endl;
@@ -294,13 +295,21 @@ void Window::createDescriptorSetLayout() {
     uboLayoutBinding.descriptorCount = 1;
     uboLayoutBinding.stageFlags      = vk::ShaderStageFlagBits::eVertex;
 
-    std::array<vk::DescriptorSetLayoutBinding, 2> bindings = {uboLayoutBinding, samplerLayoutBinding};
+    std::array<vk::DescriptorSetLayoutBinding, 2> textureBindings = {uboLayoutBinding, samplerLayoutBinding};
 
-    vk::DescriptorSetLayoutCreateInfo layoutInfo{};
-    layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
-    layoutInfo.pBindings    = bindings.data();
+    vk::DescriptorSetLayoutCreateInfo textureLayoutInfo{};
+    textureLayoutInfo.bindingCount = static_cast<uint32_t>(textureBindings.size());
+    textureLayoutInfo.pBindings    = textureBindings.data();
 
-    if (device.createDescriptorSetLayout(&layoutInfo, nullptr, &descriptorSetLayout) != vk::Result::eSuccess) {
+    if (device.createDescriptorSetLayout(&textureLayoutInfo, nullptr, &textureDescriptorSetLayout) != vk::Result::eSuccess) {
+        throw std::runtime_error("failed to create descriptor set layout!");
+    }
+
+    vk::DescriptorSetLayoutCreateInfo noTextureLayoutInfo{};
+    noTextureLayoutInfo.bindingCount = 1;
+    noTextureLayoutInfo.pBindings    = &uboLayoutBinding;
+
+    if (device.createDescriptorSetLayout(&noTextureLayoutInfo, nullptr, &noTextureDescriptorSetLayout) != vk::Result::eSuccess) {
         throw std::runtime_error("failed to create descriptor set layout!");
     }
 }
@@ -408,11 +417,15 @@ void Window::cleanUp() {
     }
 
     device.destroyShaderModule(vertexShader, nullptr);
-    device.destroyShaderModule(fragmentShader, nullptr);
-    device.destroyDescriptorSetLayout(descriptorSetLayout);
+    device.destroyShaderModule(textureFragmentShader, nullptr);
+    device.destroyShaderModule(noTextureFragmentShader, nullptr);
+    device.destroyDescriptorSetLayout(textureDescriptorSetLayout);
+    device.destroyDescriptorSetLayout(noTextureDescriptorSetLayout);
     device.destroySwapchainKHR(handle);
-    device.destroyPipelineLayout(pipelineLayout);
-    device.destroyPipeline(graphicsPipeline);
+    device.destroyPipelineLayout(texturePipelineLayout);
+    device.destroyPipelineLayout(noTexturePipelineLayout);
+    device.destroyPipeline(textureGraphicsPipeline);
+    device.destroyPipeline(noTextureGraphicsPipeline);
     device.destroy();
 
     logger.cleanUp(instance);
@@ -496,11 +509,19 @@ void Window::createShaderModules() {
         throw std::runtime_error("Failed to create vertex shader module!");
     }
 
-    vk::ShaderModuleCreateInfo fragmentShaderModuleCreateInfo{};
-    fragmentShaderModuleCreateInfo.codeSize = shader_frag_spv_len;
-    fragmentShaderModuleCreateInfo.pCode    = reinterpret_cast<const uint32_t*>(shader_frag_spv);
+    vk::ShaderModuleCreateInfo textureFragmentShaderModuleCreateInfo{};
+    textureFragmentShaderModuleCreateInfo.codeSize = textureShader_frag_spv_len;
+    textureFragmentShaderModuleCreateInfo.pCode    = reinterpret_cast<const uint32_t*>(textureShader_frag_spv);
 
-    if (device.createShaderModule(&fragmentShaderModuleCreateInfo, nullptr, &fragmentShader) != vk::Result::eSuccess) {
+    if (device.createShaderModule(&textureFragmentShaderModuleCreateInfo, nullptr, &textureFragmentShader) != vk::Result::eSuccess) {
+        throw std::runtime_error("Failed to create fragment shader module!");
+    }
+
+    vk::ShaderModuleCreateInfo noTextureFragmentShaderModuleCreateInfo{};
+    noTextureFragmentShaderModuleCreateInfo.codeSize = noTextureShader_frag_spv_len;
+    noTextureFragmentShaderModuleCreateInfo.pCode    = reinterpret_cast<const uint32_t*>(noTextureShader_frag_spv);
+
+    if (device.createShaderModule(&noTextureFragmentShaderModuleCreateInfo, nullptr, &noTextureFragmentShader) != vk::Result::eSuccess) {
         throw std::runtime_error("Failed to create fragment shader module!");
     }
 }
@@ -534,7 +555,7 @@ void Window::createGraphicsPipeline() {
     rasterizer.rasterizerDiscardEnable = vk::False;
     rasterizer.polygonMode             = vk::PolygonMode::eFill;
     rasterizer.cullMode                = vk::CullModeFlagBits::eNone;
-    rasterizer.frontFace               = vk::FrontFace::eClockwise;
+    rasterizer.frontFace               = vk::FrontFace::eCounterClockwise;
     rasterizer.depthBiasEnable         = vk::False;
     rasterizer.lineWidth               = 1.0f;
 
@@ -553,22 +574,35 @@ void Window::createGraphicsPipeline() {
     colorBlending.attachmentCount = 1;
     colorBlending.pAttachments    = &colorBlendAttachment;
 
-    vk::PipelineLayoutCreateInfo layoutInfo{};
-    layoutInfo.setLayoutCount = 1;
-    layoutInfo.pSetLayouts    = &descriptorSetLayout;
-    if (device.createPipelineLayout(&layoutInfo, nullptr, &pipelineLayout) != vk::Result::eSuccess) {
+    vk::PipelineLayoutCreateInfo textureLayoutInfo{};
+    textureLayoutInfo.setLayoutCount = 1;
+    textureLayoutInfo.pSetLayouts    = &textureDescriptorSetLayout;
+    if (device.createPipelineLayout(&textureLayoutInfo, nullptr, &texturePipelineLayout) != vk::Result::eSuccess) {
         throw std::runtime_error("failed to create pipeline layout!");
     }
+
+    vk::PipelineLayoutCreateInfo noTextureLayoutInfo{};
+    noTextureLayoutInfo.setLayoutCount = 1;
+    noTextureLayoutInfo.pSetLayouts    = &noTextureDescriptorSetLayout;
+    if (device.createPipelineLayout(&noTextureLayoutInfo, nullptr, &noTexturePipelineLayout) != vk::Result::eSuccess) {
+        throw std::runtime_error("failed to create pipeline layout!");
+    }
+
 
     vk::PipelineShaderStageCreateInfo vertStage{};
     vertStage.stage  = vk::ShaderStageFlagBits::eVertex;
     vertStage.module = vertexShader;
     vertStage.pName  = "main";
 
-    vk::PipelineShaderStageCreateInfo fragStage{};
-    fragStage.stage  = vk::ShaderStageFlagBits::eFragment;
-    fragStage.module = fragmentShader;
-    fragStage.pName  = "main";
+    vk::PipelineShaderStageCreateInfo textureFragStage{};
+    textureFragStage.stage  = vk::ShaderStageFlagBits::eFragment;
+    textureFragStage.module = textureFragmentShader;
+    textureFragStage.pName  = "main";
+
+    vk::PipelineShaderStageCreateInfo noTextureFragStage{};
+    noTextureFragStage.stage  = vk::ShaderStageFlagBits::eFragment;
+    noTextureFragStage.module = noTextureFragmentShader;
+    noTextureFragStage.pName  = "main";
 
     vk::PipelineDepthStencilStateCreateInfo depthStencil{};
     depthStencil.depthTestEnable = VK_TRUE;
@@ -580,13 +614,13 @@ void Window::createGraphicsPipeline() {
     depthStencil.stencilTestEnable = VK_FALSE;
 
 
-    vk::PipelineShaderStageCreateInfo shaderStages[] = { vertStage, fragStage };
+    vk::PipelineShaderStageCreateInfo textureShaderStages[] = { vertStage, textureFragStage };
 
     vk::GraphicsPipelineCreateInfo pipelineInfo{};
     // ── removed pNext renderingInfo, added renderPass instead ─────────────────
     pipelineInfo.pNext               = nullptr;
     pipelineInfo.stageCount          = 2;
-    pipelineInfo.pStages             = shaderStages;
+    pipelineInfo.pStages             = textureShaderStages;
     pipelineInfo.pVertexInputState   = &vertexInput;
     pipelineInfo.pInputAssemblyState = &inputAssembly;
     pipelineInfo.pViewportState      = &viewportState;
@@ -594,13 +628,41 @@ void Window::createGraphicsPipeline() {
     pipelineInfo.pMultisampleState   = &multisampling;
     pipelineInfo.pColorBlendState    = &colorBlending;
     pipelineInfo.pDynamicState       = &dynamicState;
-    pipelineInfo.layout              = pipelineLayout;
+    pipelineInfo.layout              = texturePipelineLayout;
     pipelineInfo.pDepthStencilState  = &depthStencil;
-    pipelineInfo.renderPass          = renderPass;  // ← the swap
-    pipelineInfo.subpass             = 0;           // ← new
+    pipelineInfo.renderPass          = renderPass;
+    pipelineInfo.subpass             = 0;
 
-    auto result = device.createGraphicsPipelines(VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline);
+    auto result = device.createGraphicsPipelines(VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &textureGraphicsPipeline);
     if (result != vk::Result::eSuccess) {
+        throw std::runtime_error("failed to create graphics pipeline!");
+    }
+
+    //No Texture / SHape shader
+
+    vk::PipelineShaderStageCreateInfo noTextureShaderStages[] = { vertStage, noTextureFragStage };
+
+    // vk::GraphicsPipelineCreateInfo noTexturePipelineInfo{};
+    pipelineInfo = vk::GraphicsPipelineCreateInfo{};
+    // ── removed pNext renderingInfo, added renderPass instead ─────────────────
+    pipelineInfo.pNext               = nullptr;
+    pipelineInfo.stageCount          = 2;
+    pipelineInfo.pStages             = noTextureShaderStages;
+    pipelineInfo.pVertexInputState   = &vertexInput;
+    pipelineInfo.pInputAssemblyState = &inputAssembly;
+    pipelineInfo.pViewportState      = &viewportState;
+    pipelineInfo.pRasterizationState = &rasterizer;
+    pipelineInfo.pMultisampleState   = &multisampling;
+    pipelineInfo.pColorBlendState    = &colorBlending;
+    pipelineInfo.pDynamicState       = &dynamicState;
+    pipelineInfo.layout              = noTexturePipelineLayout;
+    pipelineInfo.pDepthStencilState  = &depthStencil;
+    pipelineInfo.renderPass          = renderPass;
+    pipelineInfo.subpass             = 0;
+
+
+    if (device.createGraphicsPipelines(VK_NULL_HANDLE, 1,
+        &pipelineInfo, nullptr, &noTextureGraphicsPipeline) != vk::Result::eSuccess) {
         throw std::runtime_error("failed to create graphics pipeline!");
     }
 }
@@ -650,7 +712,8 @@ void Window::startFrame() {
 
     currentFrameData->commandBuffer.beginRenderPass(&rpBegin, vk::SubpassContents::eInline);
 
-    assert(graphicsPipeline != VK_NULL_HANDLE && "Pipeline is null!");
+    assert(textureGraphicsPipeline != VK_NULL_HANDLE && "Texture Pipeline is null!");
+    assert(noTextureGraphicsPipeline != VK_NULL_HANDLE && "No Texture Pipeline is null!");
     assert(windowWidth > 0 && windowHeight > 0 && "Invalid dimensions!");
 
     vk::Viewport vp{};
@@ -668,7 +731,6 @@ void Window::startFrame() {
 
     currentFrameData->commandBuffer.setViewport(0, 1, &vp);
     currentFrameData->commandBuffer.setScissor(0, 1, &sc);
-    currentFrameData->commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
 }
 
 void Window::endFrame() {

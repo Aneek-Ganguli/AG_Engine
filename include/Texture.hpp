@@ -7,7 +7,7 @@
 class Texture {
 public:
     Texture(const char* texturePath,Window* window);
-    Texture() = default;
+    Texture():hasValue(false){};
 
     void cleanUp(Window* window);
     static void createImage(uint32_t width, uint32_t height, vk::Format format,
@@ -17,13 +17,15 @@ public:
     static void createImageView(vk::Device* device,vk::Image &textureImage,vk::ImageView &textureImageView,vk::Format format,vk::ImageAspectFlags aspectFlags);
 // private:
     stbi_uc* pixels{};
-    vk::DeviceSize size;
-    int width, height,textureChannels;
-    vk::Buffer stagingBuffer;
-    vk::DeviceMemory stagingBufferMemory;
+    vk::DeviceSize size{};
+    int width = 0, height = 0,textureChannels = 0;
+    vk::Buffer stagingBuffer{};
+    vk::DeviceMemory stagingBufferMemory{};
 
-    vk::Image textureImage;
-    vk::DeviceMemory textureImageMemory;
+    vk::Image textureImage{};
+    vk::DeviceMemory textureImageMemory{};
+
+    bool hasValue = true;
 
 
     void transitionImageLayout(vk::Image image, vk::Format format,
@@ -32,8 +34,8 @@ public:
     void copyBufferToImage(vk::Buffer buffer, vk::Image image,
                            uint32_t width, uint32_t height, Window* window);
 
-    vk::ImageView  textureImageView;
-    vk::Sampler    textureSampler;
+    vk::ImageView  textureImageView{};
+    vk::Sampler    textureSampler{};
 
 
     void createTextureSampler(Window* window);

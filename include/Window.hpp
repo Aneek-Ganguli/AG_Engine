@@ -40,10 +40,14 @@ public:
 
     vk::Queue* getGraphicsQueue(){return &queue;}
 
-    vk::DescriptorSetLayout getDescriptorSetLayout(){return descriptorSetLayout;}
+    vk::DescriptorSetLayout getTextureDescriptorSetLayout(){return textureDescriptorSetLayout;}
+    vk::DescriptorSetLayout getNoTextureDescriptorSetLayout(){return noTextureDescriptorSetLayout;}
 
-    vk::PipelineLayout getPipelineLayout(){return pipelineLayout;}
+    vk::PipelineLayout getTexturePipelineLayout(){return texturePipelineLayout;}
+    vk::PipelineLayout getNoTexturePipelineLayout(){return noTexturePipelineLayout;}
 
+    void bindTexturePipeline(){currentFrameData->commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, textureGraphicsPipeline);}
+    void bindNoTexturePipeline(){currentFrameData->commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, noTextureGraphicsPipeline);}
     // Window.hpp — add getter
     int width,height;
 private:
@@ -86,15 +90,21 @@ private:
     void createFrameData();
     void destroyFrameData();
 
-    vk::Pipeline graphicsPipeline{};
     void createGraphicsPipeline();
+    // Shape
+    vk::Pipeline textureGraphicsPipeline{};
+    vk::DescriptorSetLayout  textureDescriptorSetLayout{};
+    vk::PipelineLayout  texturePipelineLayout;
+
+    // No textures only shape/colour
+    vk::Pipeline noTextureGraphicsPipeline{};
+    vk::DescriptorSetLayout  noTextureDescriptorSetLayout{};
+    vk::PipelineLayout  noTexturePipelineLayout;
 
     vk::ShaderModule vertexShader{};
-    vk::ShaderModule fragmentShader{};
+    vk::ShaderModule textureFragmentShader{};
+    vk::ShaderModule noTextureFragmentShader{};
     void createShaderModules();
-
-    vk::DescriptorSetLayout descriptorSetLayout{};
-    vk::PipelineLayout pipelineLayout;
 
     VertexInfo vertexInfo{};
     // VertexInfo2 vertexInfo2{};

@@ -28,7 +28,7 @@ public:
     std::vector<vk::Buffer> uniformBuffers;
     std::vector<vk::DeviceMemory> uniformBuffersMemory;
     std::vector<void*> uniformBuffersMapped;
-    void updateUniformBuffer(UBO* newUBO,uint32_t currentImage);
+    void updateUniformBuffer(UBO* newUBO,size_t uboSize, uint32_t currentImage);
 
 private:
     std::vector<Vertex> vertices;

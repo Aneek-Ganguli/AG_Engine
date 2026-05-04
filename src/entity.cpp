@@ -80,14 +80,23 @@ uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties,
 void Entity::draw(Window *window) {
     vk::Buffer vertexBuffers[] = {vertexBuffer};
     vk::DeviceSize offsets[] = {    0};
-
+    if (texture->hasValue) {
+        window->bindTexturePipeline();
+    }else {
+        window->bindNoTexturePipeline();
+    }
 
     window->getCurrentFrameData()->commandBuffer.bindVertexBuffers(0,1,vertexBuffers,offsets);
 
     window->getCurrentFrameData()->commandBuffer.bindIndexBuffer(indexBuffer,0,vk::IndexType::eUint16);
 
-    window->getCurrentFrameData()->commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
-        window->getPipelineLayout(), 0, 1, &descriptorSets[frameIndex], 0, nullptr);
+    if (texture->hasValue){
+        window->getCurrentFrameData()->commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
+           window->getTexturePipelineLayout(), 0, 1, &descriptorSets[frameIndex], 0, nullptr);
+    }else{
+        window->getCurrentFrameData()->commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
+           window->getNoTexturePipelineLayout(), 0, 1, &descriptorSets[frameIndex], 0, nullptr);
+    }
     window->getCurrentFrameData()->commandBuffer.drawIndexed(indexCount, 1,0, 0, 0);
 }
 
@@ -227,17 +236,7 @@ void Entity::createUniformBuffers(Window* window) {
     }
 }
 
-void Entity::updateUniformBuffer(UBO* newUBO,uint32_t currentImage) {
-    UBO ubo{};
-    ubo.model = glm::mat4(1.0f);
-    ubo.view = glm::lookAt(glm::vec3(0.0f, 0.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-
-    // Use actual window dimensions from the Window class
-    float aspect = windowWidth / (float)windowHeight;
-    ubo.proj = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 10.0f);
-
-    // ubo.proj[1][1] *= -1; // Keep this for Vulkan Y-axis
-
+void Entity::updateUniformBuffer(UBO* newUBO,size_t uboSize, uint32_t currentImage) {
     memcpy(uniformBuffersMapped[currentImage], newUBO, sizeof(*newUBO));
 }
 
@@ -259,52 +258,94 @@ void Entity::createDescriptorPool(Window* window) {
 }
 
 void Entity::createDescriptorSets(Window* window) {
-    std::vector<vk::DescriptorSetLayout> layouts(NUM_FRAMES_IN_FLIGHT, window->getDescriptorSetLayout());
-    vk::DescriptorSetAllocateInfo allocInfo{};
-    allocInfo.descriptorPool = descriptorPool;
-    allocInfo.descriptorSetCount = static_cast<uint32_t>(NUM_FRAMES_IN_FLIGHT);
-    allocInfo.pSetLayouts = layouts.data();
+    if (texture->hasValue == true){
+        std::vector<vk::DescriptorSetLayout> layouts(NUM_FRAMES_IN_FLIGHT, window->getTextureDescriptorSetLayout());
+        vk::DescriptorSetAllocateInfo allocInfo{};
+        allocInfo.descriptorPool = descriptorPool;
+        allocInfo.descriptorSetCount = static_cast<uint32_t>(NUM_FRAMES_IN_FLIGHT);
+        allocInfo.pSetLayouts = layouts.data();
 
-    descriptorSets.resize(NUM_FRAMES_IN_FLIGHT);
-    if (DEVICE->allocateDescriptorSets(&allocInfo, descriptorSets.data()) != vk::Result::eSuccess) {
-        throw std::runtime_error("failed to allocate descriptor sets!");
-    }
+        descriptorSets.resize(NUM_FRAMES_IN_FLIGHT);
+        if (DEVICE->allocateDescriptorSets(&allocInfo, descriptorSets.data()) != vk::Result::eSuccess) {
+            throw std::runtime_error("failed to allocate descriptor sets!");
+        }
 
-    for (size_t i = 0; i < NUM_FRAMES_IN_FLIGHT; i++) {
-        vk::DescriptorBufferInfo bufferInfo{};
-        bufferInfo.buffer = uniformBuffers[i];
-        bufferInfo.offset = 0;
-        bufferInfo.range = sizeof(UBO);
+        for (size_t i = 0; i < NUM_FRAMES_IN_FLIGHT; i++) {
+            vk::DescriptorBufferInfo bufferInfo{};
+            bufferInfo.buffer = uniformBuffers[i];
+            bufferInfo.offset = 0;
+            bufferInfo.range = sizeof(UBO);
 
-        vk::DescriptorImageInfo imageInfo{};
-        imageInfo.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
-        imageInfo.imageView = texture->textureImageView;
-        imageInfo.sampler = texture->textureSampler;
+            vk::DescriptorImageInfo imageInfo{};
+            imageInfo.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+            imageInfo.imageView = texture->textureImageView;
+            imageInfo.sampler = texture->textureSampler;
 
-        // Use vk::WriteDescriptorSet instead of the C struct
-        std::array<vk::WriteDescriptorSet, 2> descriptorWrites{};
+            // Use vk::WriteDescriptorSet instead of the C struct
+            std::array<vk::WriteDescriptorSet, 2> descriptorWrites{};
 
-        // First descriptor: Uniform Buffer
-        descriptorWrites[0]
-            .setDstSet(descriptorSets[i])
-            .setDstBinding(0)
-            .setDstArrayElement(0)
-            .setDescriptorType(vk::DescriptorType::eUniformBuffer)
-            .setDescriptorCount(1)
-            .setPBufferInfo(&bufferInfo);
+            // First descriptor: Uniform Buffer
+            descriptorWrites[0]
+                .setDstSet(descriptorSets[i])
+                .setDstBinding(0)
+                .setDstArrayElement(0)
+                .setDescriptorType(vk::DescriptorType::eUniformBuffer)
+                .setDescriptorCount(1)
+                .setPBufferInfo(&bufferInfo);
 
-        // Second descriptor: Combined Image Sampler
-        descriptorWrites[1]
-            .setDstSet(descriptorSets[i])
-            .setDstBinding(1)
-            .setDstArrayElement(0)
-            .setDescriptorType(vk::DescriptorType::eCombinedImageSampler)
-            .setDescriptorCount(1)
-            .setPImageInfo(&imageInfo);
+            // Second descriptor: Combined Image Sampler
+            descriptorWrites[1]
+                .setDstSet(descriptorSets[i])
+                .setDstBinding(1)
+                .setDstArrayElement(0)
+                .setDescriptorType(vk::DescriptorType::eCombinedImageSampler)
+                .setDescriptorCount(1)
+                .setPImageInfo(&imageInfo);
 
-        // Call the device method directly
-        DEVICE->updateDescriptorSets(descriptorWrites, nullptr);
+            // Call the device method directly
+            DEVICE->updateDescriptorSets(descriptorWrites, nullptr);
+        }
+    }else {
+        std::vector<vk::DescriptorSetLayout> layouts(NUM_FRAMES_IN_FLIGHT, window->getNoTextureDescriptorSetLayout());
+        vk::DescriptorSetAllocateInfo allocInfo{};
+        allocInfo.descriptorPool = descriptorPool;
+        allocInfo.descriptorSetCount = static_cast<uint32_t>(NUM_FRAMES_IN_FLIGHT);
+        allocInfo.pSetLayouts = layouts.data();
 
-        // DEVICE->updateDescriptorSets(1, &descriptorWrite, 0, nullptr);
+        descriptorSets.resize(NUM_FRAMES_IN_FLIGHT);
+        if (DEVICE->allocateDescriptorSets(&allocInfo, descriptorSets.data()) != vk::Result::eSuccess) {
+            throw std::runtime_error("failed to allocate descriptor sets!");
+        }
+
+        for (size_t i = 0; i < NUM_FRAMES_IN_FLIGHT; i++) {
+            vk::DescriptorBufferInfo bufferInfo{};
+            bufferInfo.buffer = uniformBuffers[i];
+            bufferInfo.offset = 0;
+            bufferInfo.range = sizeof(UBO);
+
+            // vk::DescriptorImageInfo imageInfo{};
+            // imageInfo.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+            // imageInfo.imageView = texture->textureImageView;
+            // imageInfo.sampler = texture->textureSampler;
+
+            // Use vk::WriteDescriptorSet instead of the C struct
+            // std::array<vk::WriteDescriptorSet, 2> descriptorWrites{};
+            vk::WriteDescriptorSet descriptorWrites{};
+
+            // First descriptor: Uniform Buffer
+            descriptorWrites
+                .setDstSet(descriptorSets[i])
+                .setDstBinding(0)
+                .setDstArrayElement(0)
+                .setDescriptorType(vk::DescriptorType::eUniformBuffer)
+                .setDescriptorCount(1)
+                .setPBufferInfo(&bufferInfo);
+
+            // Second descriptor: Combined Image Sampler
+
+
+            // Call the device method directly
+            DEVICE->updateDescriptorSets(descriptorWrites, nullptr);
+        }
     }
 }
