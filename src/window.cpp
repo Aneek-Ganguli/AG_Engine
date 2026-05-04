@@ -335,9 +335,9 @@ Window::Window(const char* p_title, int p_width, int p_height) : title(p_title),
 
     // ── dropped to 1.2 — no dynamic rendering needed ──────────────────────────
     vk::ApplicationInfo appInfo = vk::ApplicationInfo(
-        title, VK_MAKE_VERSION(1, 0, 0),
-        "AG_Engine Vulkan", VK_MAKE_VERSION(1, 0, 0),
-        VK_API_VERSION_1_2
+        title, VK_MAKE_VERSION(1, 1, 0),
+        "AG_Engine Vulkan", VK_MAKE_VERSION(1,2, 6),
+        VK_API_VERSION_1_1
     );
 
     uint32_t glfwExtensionCount = 0;
@@ -374,7 +374,7 @@ Window::Window(const char* p_title, int p_width, int p_height) : title(p_title),
     }
     surface = cSurface;
 
-    logger = Logger(instance);
+    if (debug){logger = Logger(instance);}
 
     createDevice();
     createSwapchain();
@@ -428,7 +428,7 @@ void Window::cleanUp() {
     device.destroyPipeline(noTextureGraphicsPipeline);
     device.destroy();
 
-    logger.cleanUp(instance);
+    if (debug){logger.cleanUp(instance);}
     instance.destroySurfaceKHR(surface);
     instance.destroy();
 

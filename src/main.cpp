@@ -31,7 +31,7 @@ int main() {
     Window window("im a Tau Cetian",800,600);
 
 
-    std::cout << "Window variables " << window.width << " " << window.height << std::endl;
+    if (debug){std::cout << "Window variables " << window.width << " " << window.height << std::endl;}
     windowWidth = window.width;
     windowHeight = window.height;
 
@@ -76,6 +76,7 @@ int main() {
     Model model;
     model.vertices = vertices;
     model.indices = indices;
+
 
     Texture text("res/resource.jpg",&window);
     // Texture text{};
