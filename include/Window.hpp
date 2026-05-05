@@ -48,8 +48,10 @@ public:
 
     void bindTexturePipeline(){currentFrameData->commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, textureGraphicsPipeline);}
     void bindNoTexturePipeline(){currentFrameData->commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, noTextureGraphicsPipeline);}
-    // Window.hpp — add getter
     int width,height;
+    void pollEvents(){glfwPollEvents();}
+
+    std::array<float,4>clearColor{0.0f, 0.0f, 0.0f, 0.0f};
 private:
     const char* title;
     GLFWwindow* window{};

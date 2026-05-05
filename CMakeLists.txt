@@ -21,6 +21,7 @@ add_executable(VulkanProject
         src/entity.cpp
         src/texture.cpp
         src/depthBuffer.cpp
+        src/math.cpp
 )
 file(COPY ${CMAKE_SOURCE_DIR}/res DESTINATION ${CMAKE_BINARY_DIR})
 target_compile_definitions(VulkanProject PRIVATE DEBUG=1)

@@ -88,7 +88,7 @@ int main() {
         UBO ubo{};
 
     while (window.isWindowOpen()) {
-        glfwPollEvents();
+
 
         window.startFrame();
 

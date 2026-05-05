@@ -330,10 +330,9 @@ Window::Window(const char* p_title, int p_width, int p_height) : title(p_title),
 
 
 
-    uint32_t version = VK_MAKE_API_VERSION(0, 1, 0, 0);
+    uint32_t version = VK_API_VERSION_1_1;//VK_MAKE_API_VERSION(1, 1, 0, 0);
     vkEnumerateInstanceVersion(&version);
 
-    // ── dropped to 1.2 — no dynamic rendering needed ──────────────────────────
     vk::ApplicationInfo appInfo = vk::ApplicationInfo(
         title, VK_MAKE_VERSION(1, 1, 0),
         "AG_Engine Vulkan", VK_MAKE_VERSION(1,2, 6),
@@ -379,7 +378,7 @@ Window::Window(const char* p_title, int p_width, int p_height) : title(p_title),
     createDevice();
     createSwapchain();
     depthBuffer = DepthBuffer(&device,&physicalDevice, windowWidth, windowHeight);
-    // ── render pass + framebuffers before pipeline ─────────────────────────────
+
     createRenderPass();
     createFramebuffers();
 
@@ -406,7 +405,6 @@ void Window::cleanUp() {
 
     depthBuffer.cleanUp(&device);
 
-    // ── destroy framebuffers + render pass ────────────────────────────────────
     for (auto fb : framebuffers) {
         device.destroyFramebuffer(fb);
     }
@@ -479,8 +477,6 @@ void Window::createDevice() {
 
     const char* extensions[] = { vk::KHRSwapchainExtensionName };
 
-    // ── removed VkPhysicalDeviceVulkan13Features entirely ─────────────────────
-
     vk::DeviceQueueCreateInfo queueCreateInfo{};
     queueCreateInfo.queueFamilyIndex = queueFamilyIndex;
     queueCreateInfo.queueCount       = 1;
@@ -491,7 +487,6 @@ void Window::createDevice() {
     deviceCreateInfo.pQueueCreateInfos       = &queueCreateInfo;
     deviceCreateInfo.enabledExtensionCount   = std::size(extensions);
     deviceCreateInfo.ppEnabledExtensionNames = extensions;
-    // ── pNext is now nullptr, no 1.3 feature chain ────────────────────────────
     deviceCreateInfo.pNext = nullptr;
 
     device = physicalDevice.createDevice(deviceCreateInfo);
@@ -697,10 +692,10 @@ void Window::startFrame() {
     }
 
     // ── render pass begin replaces beginRendering + barriers ──────────────────
-    vk::ClearValue clearValue{};
-    clearValue.color = vk::ClearColorValue{std::array<float,4>{0.0f, 1.0f, 1.0f, 1.0f}};
+    // vk::ClearValue clearValue{};
+    // clearValue.color = vk::ClearColorValue{std::array<float,4>{0.0f, 1.0f, 1.0f, 1.0f}};
     std::array<vk::ClearValue, 2> clearValues{};
-    clearValues[0].color = vk::ClearColorValue{std::array<float,4>{0.0f, 1.0f, 1.0f, 1.0f}};
+    clearValues[0].color = vk::ClearColorValue{std::array<float,4>{clearColor}};
     clearValues[1].depthStencil = vk::ClearDepthStencilValue{1.0f, 0};
 
     vk::RenderPassBeginInfo rpBegin{};
