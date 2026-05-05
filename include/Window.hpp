@@ -17,7 +17,7 @@
 
 static constexpr uint32_t NUM_FRAMES_IN_FLIGHT = 2u,NUM_SWAPCHAIN_IMAGES = 3u;
 uint8_t static frameIndex = 0u;
-static int windowWidth, windowHeight;
+// static int windowWidth = 0, windowHeight = 0;
 class Window {
 public:
     Window(const char *p_title, int width, int p_height);

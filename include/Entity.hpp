@@ -12,13 +12,14 @@ void createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPro
 
 class Entity {
 public:
-    Entity(Window* window,std::vector<Vertex> vertices,std::vector<uint16_t> indices,Texture* p_texture);
+    Entity(Window* window,std::vector<Vertex> vertices,std::vector<uint16_t> indices,Texture* p_texture = nullptr);
     Entity(Model model,std::vector<ImageData> imageData,Texture* p_texture,Window* window);
     Entity() : texture() {}
 
     void cleanUp(Window* window);
 
     void draw(Window* window);
+    void draw(UBO* ubo,Window* window);
     vk::Buffer vertexBuffer;
     vk::DeviceMemory vertexBufferMemory;
     vk::Buffer indexBuffer;

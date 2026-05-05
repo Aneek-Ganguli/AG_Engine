@@ -32,8 +32,8 @@ int main() {
 
 
     if (debug){std::cout << "Window variables " << window.width << " " << window.height << std::endl;}
-    windowWidth = window.width;
-    windowHeight = window.height;
+    // windowWidth = window.width;
+    // windowHeight = window.height;
 
 
     std::vector<glm::vec3> vertices = {
@@ -88,7 +88,7 @@ int main() {
         UBO ubo{};
 
     while (window.isWindowOpen()) {
-
+        window.pollEvents();
 
         window.startFrame();
 

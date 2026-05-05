@@ -12,7 +12,7 @@
 #include "Texture.hpp"
 
 #define DEVICE window->getDevice()
-Entity::Entity(Window* window,std::vector<Vertex> vertices,std::vector<uint16_t> indices,Texture* p_texture = nullptr):vertices(vertices) , indices(indices),texture(p_texture){
+Entity::Entity(Window* window,std::vector<Vertex> vertices,std::vector<uint16_t> indices,Texture* p_texture):vertices(vertices) , indices(indices),texture(p_texture){
     //buffer Size
     indexCount = indices.size();
     // depthBuffer = DepthBuffer(window->getDevice(),window->getPhysicalDevice(), windowWidth, windowHeight);
@@ -24,7 +24,7 @@ Entity::Entity(Window* window,std::vector<Vertex> vertices,std::vector<uint16_t>
 
 }
 
-Entity::Entity(Model model, std::vector<ImageData> imageData, Texture *p_texture = nullptr, Window *window):texture(p_texture),indices(model.indices) {
+Entity::Entity(Model model, std::vector<ImageData> imageData, Texture *p_texture , Window *window):texture(p_texture),indices(model.indices) {
 
     // buffer Size
     indexCount = model.indices.size();
@@ -100,6 +100,10 @@ void Entity::draw(Window *window) {
     window->getCurrentFrameData()->commandBuffer.drawIndexed(indexCount, 1,0, 0, 0);
 }
 
+void Entity::draw(UBO* ubo, Window* window) {
+    updateUniformBuffer(ubo,sizeof(*ubo),frameIndex);
+    draw(window);
+}
 void createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties,
     vk::Buffer& buffer,vk::DeviceMemory& bufferMemory,Window* window) {
 
@@ -129,8 +133,8 @@ void createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPro
         throw std::runtime_error("failed to allocate vertex buffer memory!");
     }
     window->getDevice()->bindBufferMemory(buffer, bufferMemory, 0);
-    windowWidth = window->width;
-    windowHeight = window->height;
+    // windowWidth = window->width;
+    // windowHeight = window->height;
 }
 
 void Entity::copyBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::DeviceSize size,Window* window) {

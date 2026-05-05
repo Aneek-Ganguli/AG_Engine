@@ -145,8 +145,8 @@ void Window::createFramebuffers() {
         fbInfo.renderPass      = renderPass;
         fbInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
         fbInfo.pAttachments    = attachments.data();
-        fbInfo.width           = static_cast<uint32_t>(windowWidth);
-        fbInfo.height          = static_cast<uint32_t>(windowHeight);
+        fbInfo.width           = static_cast<uint32_t>(width);
+        fbInfo.height          = static_cast<uint32_t>(height);
         fbInfo.layers          = 1;
 
         if (device.createFramebuffer(&fbInfo, nullptr, &framebuffers[i]) != vk::Result::eSuccess) {
@@ -177,8 +177,7 @@ void Window::createSwapchain() {
 
     actualSurfaceFormat = surfaceFormat;
 
-    glfwGetFramebufferSize(window, &windowWidth, &windowHeight);
-    // std::cout << width << " " << height << "\n";
+    glfwGetFramebufferSize(window, &width, &height);
 
     auto presentModes = physicalDevice.getSurfacePresentModesKHR(surface);
     if (presentModes.empty()) {
@@ -199,8 +198,8 @@ void Window::createSwapchain() {
     swapchainCI.imageFormat      = surfaceFormat.format;
     swapchainCI.imageColorSpace  = surfaceFormat.colorSpace;
     swapchainCI.imageExtent      = vk::Extent2D{
-        static_cast<uint32_t>(windowWidth),
-        static_cast<uint32_t>(windowHeight)
+        static_cast<uint32_t>(width),
+        static_cast<uint32_t>(height)
     };
     swapchainCI.imageArrayLayers = 1;
     swapchainCI.imageUsage       = vk::ImageUsageFlagBits::eColorAttachment;
@@ -325,8 +324,8 @@ void Window::destroyFrameData() {
 Window::Window(const char* p_title, int p_width, int p_height) : title(p_title), logger() {
     width  = p_width;
     height = p_height;
-    windowWidth  = p_width;
-    windowHeight = p_height;
+    width  = p_width;
+    height = p_height;
 
 
 
@@ -377,7 +376,7 @@ Window::Window(const char* p_title, int p_width, int p_height) : title(p_title),
 
     createDevice();
     createSwapchain();
-    depthBuffer = DepthBuffer(&device,&physicalDevice, windowWidth, windowHeight);
+    depthBuffer = DepthBuffer(&device,&physicalDevice, width, height);
 
     createRenderPass();
     createFramebuffers();
@@ -387,7 +386,11 @@ Window::Window(const char* p_title, int p_width, int p_height) : title(p_title),
     createDescriptorSetLayout();
     createGraphicsPipeline();
 
+
     vertexInfo = VertexInfo();
+
+    width  = p_width;
+    height = p_height;
 }
 
 bool Window::isWindowOpen() {
@@ -445,7 +448,7 @@ void Window::createGLFWwindow() {
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-    window = glfwCreateWindow(windowWidth, windowHeight, title, nullptr, nullptr);
+    window = glfwCreateWindow(width, height, title, nullptr, nullptr);
     assert(window && "GLFW window creation failed!");
 }
 
@@ -701,7 +704,7 @@ void Window::startFrame() {
     vk::RenderPassBeginInfo rpBegin{};
     rpBegin.renderPass        = renderPass;
     rpBegin.framebuffer       = framebuffers[imageIndex];
-    rpBegin.renderArea        = vk::Rect2D({0, 0}, {static_cast<uint32_t>(windowWidth), static_cast<uint32_t>(windowHeight)});
+    rpBegin.renderArea        = vk::Rect2D({0, 0}, {static_cast<uint32_t>(width), static_cast<uint32_t>(height)});
     rpBegin.clearValueCount   = static_cast<uint32_t>(clearValues.size());
     rpBegin.pClearValues      = clearValues.data();
 
@@ -709,19 +712,19 @@ void Window::startFrame() {
 
     assert(textureGraphicsPipeline != VK_NULL_HANDLE && "Texture Pipeline is null!");
     assert(noTextureGraphicsPipeline != VK_NULL_HANDLE && "No Texture Pipeline is null!");
-    assert(windowWidth > 0 && windowHeight > 0 && "Invalid dimensions!");
+    assert(width > 0 && height > 0 && "Invalid dimensions!");
 
     vk::Viewport vp{};
     vp.x        = 0.0f;
     vp.y        = 0.0f;
-    vp.width    = (float)windowWidth;
-    vp.height   = (float)windowHeight;
+    vp.width    = (float)width;
+    vp.height   = (float)height;
     vp.minDepth = 0.0f;
     vp.maxDepth = 1.0f;
 
     vk::Rect2D sc = vk::Rect2D(
         {0,0},
-        {static_cast<uint32_t>(windowWidth),static_cast<uint32_t>(windowHeight)}
+        {static_cast<uint32_t>(width),static_cast<uint32_t>(height)}
     );
 
     currentFrameData->commandBuffer.setViewport(0, 1, &vp);
