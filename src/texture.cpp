@@ -294,8 +294,8 @@ void Texture::createTextureSampler(Window* window) {
     samplerInfo.addressModeV = vk::SamplerAddressMode::eRepeat;
     samplerInfo.addressModeW = vk::SamplerAddressMode::eRepeat;
 
-    // Anisotropic filtering — use the highest quality the device supports
-    samplerInfo.anisotropyEnable = vk::False;
+
+    samplerInfo.anisotropyEnable = vk::True;
     samplerInfo.maxAnisotropy    = properties.limits.maxSamplerAnisotropy;
 
     // Color returned when addressMode is eClampToBorder (not used here)

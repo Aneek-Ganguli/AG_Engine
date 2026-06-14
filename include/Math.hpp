@@ -23,3 +23,4 @@ struct ImageData {
 void normalize(float &x, float &y, float &z,float windowWidth, float windowHeight);
 
 std::vector<ImageData> solidColor(Model* model, glm::vec3 color);
+std::vector<ImageData> squareTexture(Model* model) ;
