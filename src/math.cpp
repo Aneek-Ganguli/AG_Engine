@@ -35,10 +35,10 @@ std::vector<ImageData> solidColor(Model* model, glm::vec3 color) {
     return data;
 }
 
-std::vector<ImageData> squareTexture(Model* model) {
+std::vector<ImageData> squareTexture(Model* model,glm::vec3 color ) {
     std::vector<ImageData> data(model->vertices.size());
     for (size_t i = 0; i < model->vertices.size(); i++) {
-        data[i].color = {1.0f, 1.0f, 1.0f}; // White color for texture
+        data[i].color = color; // White color for texture
         // Assign texture coordinates based on vertex position
         if (i == 0) data[i].texCoord = {0.0f, 0.0f}; // Bottom-left
         else if (i == 1) data[i].texCoord = {1.0f, 0.0f}; // Bottom-right

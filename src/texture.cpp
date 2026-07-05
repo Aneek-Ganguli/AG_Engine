@@ -286,16 +286,16 @@ void Texture::createTextureSampler(Window* window) {
 
     // Linear interpolation for both magnification (oversampling) and
     // minification (undersampling)
-    samplerInfo.magFilter = vk::Filter::eLinear;
-    samplerInfo.minFilter = vk::Filter::eLinear;
+    samplerInfo.magFilter = vk::Filter::eNearest;
+    samplerInfo.minFilter = vk::Filter::eNearest;
 
     // Repeat the texture when UV coords go beyond [0, 1)
-    samplerInfo.addressModeU = vk::SamplerAddressMode::eRepeat;
-    samplerInfo.addressModeV = vk::SamplerAddressMode::eRepeat;
-    samplerInfo.addressModeW = vk::SamplerAddressMode::eRepeat;
+    samplerInfo.addressModeU = vk::SamplerAddressMode::eClampToEdge;
+    samplerInfo.addressModeV = vk::SamplerAddressMode::eClampToEdge;
+    samplerInfo.addressModeW = vk::SamplerAddressMode::eClampToEdge;
 
 
-    samplerInfo.anisotropyEnable = vk::True;
+    samplerInfo.anisotropyEnable = vk::False;
     samplerInfo.maxAnisotropy    = properties.limits.maxSamplerAnisotropy;
 
     // Color returned when addressMode is eClampToBorder (not used here)

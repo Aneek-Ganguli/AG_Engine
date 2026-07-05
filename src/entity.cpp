@@ -32,7 +32,7 @@ Entity::Entity(Model model, std::vector<ImageData> imageData, Texture *p_texture
     vertices.reserve(model.vertices.size());
     for (size_t i = 0; i < model.vertices.size(); i++) {
         Vertex v;
-        v.pos = model.vertices[i];
+        v.pos= model.vertices[i];
         v.color = imageData[i].color;
         v.texCoord = imageData[i].texCoord;
         vertices.push_back(v);
@@ -352,4 +352,42 @@ void Entity::createDescriptorSets(Window* window) {
             DEVICE->updateDescriptorSets(descriptorWrites, nullptr);
         }
     }
+}
+
+// ONLY FOR SQUARE
+bool Entity::collisionSquare(UBO* ubo, Model* model, UBO* otherObject, Model* otherModel) {
+    // Safety check for empty vertex arrays
+    if (model->vertices.empty() || otherModel->vertices.empty()) return false;
+
+    // 1. Find the true min/max bounds of 'this' mesh directly from its vertices
+    float thisMinX = model->vertices[0].x;
+    float thisMaxX = model->vertices[0].x;
+    float thisMinY = model->vertices[0].y;
+    float thisMaxY = model->vertices[0].y;
+
+    for (const auto& vertex : model->vertices) {
+        if (vertex.x < thisMinX) thisMinX = vertex.x;
+        if (vertex.x > thisMaxX) thisMaxX = vertex.x;
+        if (vertex.y < thisMinY) thisMinY = vertex.y;
+        if (vertex.y > thisMaxY) thisMaxY = vertex.y;
+    }
+
+    // 2. Find the true min/max bounds of the 'other' mesh directly from its vertices
+    float otherMinX = otherModel->vertices[0].x;
+    float otherMaxX = otherModel->vertices[0].x;
+    float otherMinY = otherModel->vertices[0].y;
+    float otherMaxY = otherModel->vertices[0].y;
+
+    for (const auto& vertex : otherModel->vertices) {
+        if (vertex.x < otherMinX) otherMinX = vertex.x;
+        if (vertex.x > otherMaxX) otherMaxX = vertex.x;
+        if (vertex.y < otherMinY) otherMinY = vertex.y;
+        if (vertex.y > otherMaxY) otherMaxY = vertex.y;
+    }
+
+    // 3. Pure AABB Intersection Test
+    bool overlapX = thisMinX < otherMaxX && thisMaxX > otherMinX;
+    bool overlapY = thisMinY < otherMaxY && thisMaxY > otherMinY;
+
+    return overlapX && overlapY;
 }

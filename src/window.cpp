@@ -484,13 +484,15 @@ void Window::createDevice() {
     queueCreateInfo.queueFamilyIndex = queueFamilyIndex;
     queueCreateInfo.queueCount       = 1;
     queueCreateInfo.pQueuePriorities = &queuePriority;
+    //
+    vk::PhysicalDeviceDescriptorIndexingFeatures descriptorIndexingFeature{};
 
     vk::DeviceCreateInfo deviceCreateInfo{};
     deviceCreateInfo.queueCreateInfoCount    = 1;
     deviceCreateInfo.pQueueCreateInfos       = &queueCreateInfo;
     deviceCreateInfo.enabledExtensionCount   = std::size(extensions);
     deviceCreateInfo.ppEnabledExtensionNames = extensions;
-    deviceCreateInfo.pNext = nullptr;
+    deviceCreateInfo.pNext = &descriptorIndexingFeature;
 
     device = physicalDevice.createDevice(deviceCreateInfo);
     if (device == nullptr) throw std::runtime_error("Failed to create device!");

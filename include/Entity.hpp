@@ -31,6 +31,8 @@ public:
     std::vector<void*> uniformBuffersMapped;
     void updateUniformBuffer(UBO* newUBO,size_t uboSize, uint32_t currentImage);
 
+    [[nodiscard]] static bool collisionSquare(UBO* ubo,Model* model,UBO* otherObject, Model* otherModel);
+
 private:
     std::vector<Vertex> vertices;
     std::vector<uint16_t> indices;

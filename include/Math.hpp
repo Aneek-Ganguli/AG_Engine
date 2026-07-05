@@ -20,7 +20,7 @@ struct ImageData {
     alignas(8)  glm::vec2 texCoord;
 };
 
-void normalize(float &x, float &y, float &z,float windowWidth, float windowHeight);
+void normalize(float &x , float &y, float &z,float windowWidth, float windowHeight);
 
 std::vector<ImageData> solidColor(Model* model, glm::vec3 color);
-std::vector<ImageData> squareTexture(Model* model) ;
+std::vector<ImageData> squareTexture(Model* model,glm::vec3 color = {1.0f, 1.0f, 1.0f}) ;

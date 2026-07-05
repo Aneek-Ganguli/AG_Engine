@@ -30,6 +30,8 @@ public:
     void startFrame();
     void endFrame();
 
+    GLFWwindow* getGLFWwindow(){return window;}
+
     PerFrameData* getCurrentFrameData(){return currentFrameData;}
 
     vk::Device* getDevice(){return &device;}
