@@ -17,6 +17,7 @@ add_subdirectory(lib/glfw EXCLUDE_FROM_ALL)
 add_library(VulkanProjectV2 STATIC
         src/Window.cpp
         src/Logger.cpp
+        src/PhyscialDevice.cpp
 )
 
 target_include_directories(VulkanProjectV2

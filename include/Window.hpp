@@ -3,6 +3,7 @@
 #include <vulkan/vulkan.hpp>
 
 #include "Logger.hpp"
+#include "PhysicalDevice.hpp"
 
 #ifndef NO_DEBUG
 #define debug true
@@ -32,6 +33,8 @@ namespace AG_EngineV2 {
             void createInstance();
 
             void createGLFWwindow(int width, int height, const char* title);
+
+            PhysicalDevice physicalDevice;
         };
     }
 }

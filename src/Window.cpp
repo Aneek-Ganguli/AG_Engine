@@ -131,6 +131,7 @@ Window::Window(int width, int height, const char* title)  {
 
     logger = Logger(instance);
 
+    physicalDevice = PhysicalDevice(instance);
 }
 
 void Window::cleanUp() {
