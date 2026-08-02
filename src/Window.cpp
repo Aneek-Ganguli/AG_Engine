@@ -129,13 +129,12 @@ Window::Window(int width, int height, const char* title)  {
 
     createInstance();
 
-    logger = Logger(instance);
+    // logger = Logger(instance);
 
-    physicalDevice = PhysicalDevice(instance);
 }
 
 void Window::cleanUp() {
-    logger.cleanUp(instance);
+    // logger.cleanUp(instance);
     instance.destroy();
     glfwDestroyWindow(window);
     glfwTerminate();

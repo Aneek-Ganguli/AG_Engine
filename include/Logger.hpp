@@ -8,16 +8,16 @@ namespace AG_EngineV2 {
     namespace Core {
         class Logger {
         public:
-            Logger(vk::Instance& instance);
+            Logger(vk::Instance instance);
             Logger(){};
-            void cleanUp(vk::Instance& instance);
+            void cleanUp(vk::Instance instance);
 
 
         private:
             vk::DebugUtilsMessengerEXT debugMessenger{nullptr};
             vk::detail::DispatchLoaderDynamic dldi{};
 
-            vk::DebugUtilsMessengerEXT createMessenger(vk::Instance &instance);
+            vk::DebugUtilsMessengerEXT createMessenger(vk::Instance instance);
         };
     }
 }

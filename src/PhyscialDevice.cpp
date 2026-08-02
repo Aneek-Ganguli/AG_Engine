@@ -5,7 +5,7 @@
 
 using namespace AG_EngineV2::Core;
 
-PhysicalDevice::PhysicalDevice(vk::Instance &instance) {
+PhysicalDevice::PhysicalDevice(vk::Instance instance) {
     std::vector<vk::PhysicalDevice> devices = instance.enumeratePhysicalDevices();
     vk::PhysicalDevice selectedDevice;
     for (auto& device : devices) {
@@ -20,3 +20,4 @@ PhysicalDevice::PhysicalDevice(vk::Instance &instance) {
     }
     physicalDevice = selectedDevice;
 }
+

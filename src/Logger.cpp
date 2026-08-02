@@ -14,12 +14,12 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
     return VK_FALSE;
 }
 
-Logger::Logger(vk::Instance& instance) {
+Logger::Logger(vk::Instance instance) {
     dldi = vk::detail::DispatchLoaderDynamic(instance,vkGetInstanceProcAddr);
     debugMessenger = createMessenger(instance);
 }
 
-vk::DebugUtilsMessengerEXT Logger::createMessenger(vk::Instance& instance) {
+vk::DebugUtilsMessengerEXT Logger::createMessenger(vk::Instance instance) {
     vk::DebugUtilsMessengerCreateInfoEXT createInfo = vk::DebugUtilsMessengerCreateInfoEXT(
             vk::DebugUtilsMessengerCreateFlagsEXT(),
             //severity
@@ -35,7 +35,7 @@ vk::DebugUtilsMessengerEXT Logger::createMessenger(vk::Instance& instance) {
     return instance.createDebugUtilsMessengerEXT(createInfo,nullptr,dldi);
 }
 
-void Logger::cleanUp(vk::Instance& instance) {
+void Logger::cleanUp(vk::Instance instance) {
     // vkDestroyDebugUtilsMessengerEXT(instance,debugMessenger,nullptr);
     instance.destroyDebugUtilsMessengerEXT(debugMessenger,nullptr,dldi);
 }

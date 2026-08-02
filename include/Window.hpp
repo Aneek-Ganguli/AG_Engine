@@ -17,12 +17,13 @@ namespace AG_EngineV2 {
         public:
             Window(int width, int height, const char* title);
             void cleanUp();
-            bool isWindowOpen(){return glfwWindowShouldClose(window);};
+            bool isWindowOpen(){return !glfwWindowShouldClose(window);};
             void pollEvents(){glfwPollEvents();};
+            vk::Instance getInstance(){return instance;};
         private:
             GLFWwindow* window;
             vk::Instance instance;
-            Logger logger;
+            // Logger logger;
 
             std::vector<const char*> extensions;
             void extensionInitialization();
@@ -34,7 +35,7 @@ namespace AG_EngineV2 {
 
             void createGLFWwindow(int width, int height, const char* title);
 
-            PhysicalDevice physicalDevice;
+
         };
     }
 }

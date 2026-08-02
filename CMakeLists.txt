@@ -18,6 +18,8 @@ add_library(VulkanProjectV2 STATIC
         src/Window.cpp
         src/Logger.cpp
         src/PhyscialDevice.cpp
+        src/Queue.cpp
+        src/Device.cpp
 )
 
 target_include_directories(VulkanProjectV2
