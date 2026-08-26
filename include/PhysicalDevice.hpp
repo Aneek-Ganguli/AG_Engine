@@ -8,7 +8,6 @@ namespace AG_EngineV2 {
             PhysicalDevice(vk::Instance instance);
             PhysicalDevice(){};
             vk::PhysicalDevice* getPhysicalDevicePtr(){return &physicalDevice;};
-        private:
             vk::PhysicalDevice physicalDevice;
         };
     }

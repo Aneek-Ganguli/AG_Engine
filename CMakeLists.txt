@@ -21,6 +21,7 @@ add_library(VulkanProjectV2 STATIC
         src/Queue.cpp
         src/Device.cpp
         src/Surface.cpp
+        src/Swapchain.cpp
 )
 
 target_include_directories(VulkanProjectV2
