@@ -20,8 +20,8 @@ namespace AG_EngineV2 {
             bool isWindowOpen(){return !glfwWindowShouldClose(window);};
             void pollEvents(){glfwPollEvents();};
             vk::Instance getInstance(){return instance;};
-        private:
             GLFWwindow* window;
+        private:
             vk::Instance instance;
             // Logger logger;
 

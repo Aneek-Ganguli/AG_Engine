@@ -44,6 +44,7 @@ bool checkExtention(std::vector<const char*> requestedExtensions) {
 }
 void Window::extensionInitialization() {
     extensions = getRequiredExtensions();
+    extensions.push_back("VK_KHR_surface");
     if (debug){
         extensions.push_back(   "VK_EXT_debug_utils");
         std::cout << checkExtention(extensions) << std::endl;

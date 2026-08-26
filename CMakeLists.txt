@@ -20,6 +20,7 @@ add_library(VulkanProjectV2 STATIC
         src/PhyscialDevice.cpp
         src/Queue.cpp
         src/Device.cpp
+        src/Surface.cpp
 )
 
 target_include_directories(VulkanProjectV2
