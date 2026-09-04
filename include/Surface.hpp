@@ -5,7 +5,7 @@
 
 
 namespace AG_EngineV2::Core {
-    static const vk::Format surfaceFormat = vk::Format::eB8G8R8A8Srgb;
+    static vk::SurfaceFormatKHR surfaceFormat;
     class Surface {
     public:
         Surface(){};
