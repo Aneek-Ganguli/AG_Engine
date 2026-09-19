@@ -8,6 +8,7 @@ namespace  AG_EngineV2::Core {
         Fence(vk::Device device);
         vk::Fence fence;
         void waitAndResetFences(vk::Device device);
+        void destroyFence(vk::Device device);
     };
 
 }

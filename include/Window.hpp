@@ -15,12 +15,13 @@ namespace AG_EngineV2 {
     namespace Core{
         class Window {
         public:
-            Window(int width, int height, const char* title);
+            Window(int p_width, int p_height, const char* title);
             void cleanUp();
             bool isWindowOpen(){return !glfwWindowShouldClose(window);};
             void pollEvents(){glfwPollEvents();};
             vk::Instance getInstance(){return instance;};
             GLFWwindow* window;
+            int width,height;
         private:
             vk::Instance instance;
             // Logger logger;

@@ -54,6 +54,26 @@ Swapchain::Swapchain(vk::Device device, vk::SurfaceKHR surface, vk::PhysicalDevi
         throw std::runtime_error("Failed to create swap chain!");
     }
 
+    vk::ImageViewCreateInfo imageViewCreateInfo{};
+    imageViewCreateInfo.setFormat(surfaceFormat.format)
+                       .setViewType(vk::ImageViewType::e2D)
+                       .setSubresourceRange(vk::ImageSubresourceRange(
+                           vk::ImageAspectFlagBits::eColor,
+                            0,
+                            1,
+                            0,
+                            1
+                           )
+                       );
+    for (auto& image : swapchainImages) {
+        imageViewCreateInfo.setImage(image);
+        vk::ImageView imageView = device.createImageView(imageViewCreateInfo, nullptr);
+        if (imageView == nullptr) {
+            throw std::runtime_error("Failed to create image view!");
+        }
+        imageViews.push_back(imageView);
+    }
+
     vk::SemaphoreCreateInfo semaphoreCreateInfo{};
 
     swapchainSemaphore.resize(swapchainImages.size());
@@ -89,5 +109,6 @@ void Swapchain::destroy(vk::Device device) {
     for (auto& semaphore : swapchainSemaphore) {
         device.destroySemaphore(semaphore);
     }
+    device.destroySemaphore(acquireSemaphore);
     device.destroySwapchainKHR(swapchain);
 }

@@ -17,3 +17,6 @@ void Fence::waitAndResetFences(vk::Device device) {
         throw std::runtime_error("Failed to reset fence!");
     }
 }
+void Fence::destroyFence(vk::Device device) {
+    device.destroyFence(fence);
+}

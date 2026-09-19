@@ -121,9 +121,11 @@ void Window::createGLFWwindow(int width, int height, const char* title) {
 }
 
 
-Window::Window(int width, int height, const char* title)  {
+Window::Window(int p_width, int p_height, const char* title)  {
 
-    createGLFWwindow(width,height,title);
+    width = p_width;
+    height = p_height;
+    createGLFWwindow(p_width,p_height,title);
 
     extensionInitialization();
     layerInitialization();

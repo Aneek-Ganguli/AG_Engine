@@ -24,13 +24,17 @@ Queue::Queue(vk::PhysicalDevice* physicalDevice, Device* device) {
                    .setQueueCount(1)
                     .setPQueuePriorities(new float(1.0f));
 
-    const char* deviceExtentions[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+    const char* deviceExtentions[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME , VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME};
+
+    vk::PhysicalDeviceVulkan13Features deviceFeatures{};
+    deviceFeatures.setDynamicRendering(true);
 
     vk::DeviceCreateInfo deviceCreateInfo{};
     deviceCreateInfo.setQueueCreateInfoCount(1)
                     .setPQueueCreateInfos(&queueCreateInfo)
                     .setEnabledExtensionCount(1)
-                    .setPEnabledExtensionNames( deviceExtentions  );
+                    .setPEnabledExtensionNames( deviceExtentions  )
+                    .setPNext(&deviceFeatures);
 
 
     device->device = physicalDevice->createDevice(deviceCreateInfo);

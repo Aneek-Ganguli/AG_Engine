@@ -16,5 +16,6 @@ namespace AG_EngineV2::Core {
 
         vk::Semaphore acquireSemaphore{};
         vk::Semaphore releaseSemaphore{};
+        std::vector<vk::ImageView> imageViews;
     };
 }
