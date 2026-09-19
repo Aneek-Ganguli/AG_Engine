@@ -22,6 +22,8 @@ add_library(VulkanProjectV2 STATIC
         src/Device.cpp
         src/Surface.cpp
         src/Swapchain.cpp
+        src/GraphicsPipeline.cpp
+        src/Fence.cpp
 )
 
 target_include_directories(VulkanProjectV2

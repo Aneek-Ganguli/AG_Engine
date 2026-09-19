@@ -2,6 +2,7 @@
 #include <vulkan/vulkan.hpp>
 
 namespace AG_EngineV2::Core {
+    static uint32_t imageIndex = 0u;
     static vk::PresentModeKHR presentMode;
     class Swapchain {
     public:
@@ -11,5 +12,9 @@ namespace AG_EngineV2::Core {
         std::vector<vk::Semaphore> swapchainSemaphore{};
 
         void destroy(vk::Device device);
+        void acquireImages(vk::Device device);
+
+        vk::Semaphore acquireSemaphore{};
+        vk::Semaphore releaseSemaphore{};
     };
 }

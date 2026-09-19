@@ -1,5 +1,8 @@
 #include "Swapchain.hpp"
 
+#include <iostream>
+#include <ostream>
+
 #include "Surface.hpp"
 
 using namespace AG_EngineV2::Core;
@@ -23,9 +26,15 @@ Swapchain::Swapchain(vk::Device device, vk::SurfaceKHR surface, vk::PhysicalDevi
         }
     }
 
+    uint32_t imageCount = std::max(3u, surfaceCapabilities.minImageCount);
+    if (surfaceCapabilities.maxImageCount > 0) {
+        imageCount = std::min(imageCount, surfaceCapabilities.maxImageCount);
+    }
+
+
     vk::SwapchainCreateInfoKHR swapchainCreateInfo{};
     swapchainCreateInfo .setSurface(surface)
-                        .setMinImageCount(surfaceCapabilities.minImageCount)
+                        .setMinImageCount(imageCount)
                         .setImageFormat(surfaceFormat.format)
                         .setImageColorSpace(surfaceFormat.colorSpace)
                         .setImageExtent(surfaceCapabilities.currentExtent)
@@ -52,7 +61,29 @@ Swapchain::Swapchain(vk::Device device, vk::SurfaceKHR surface, vk::PhysicalDevi
     for (auto& semaphore : swapchainSemaphore) {
         semaphore = device.createSemaphore(semaphoreCreateInfo, nullptr);
     }
+
+    acquireSemaphore = device.createSemaphore(semaphoreCreateInfo);
+
 }
+
+void Swapchain::acquireImages(vk::Device device) {
+    auto acquire = device.acquireNextImageKHR(
+        swapchain,
+        std::numeric_limits<uint64_t>::max(),
+        acquireSemaphore,
+        VK_NULL_HANDLE
+    );
+
+
+    if (acquire.result != vk::Result::eSuccess) {
+        throw std::runtime_error("Failed to new frame");
+    }
+
+    imageIndex = acquire.value;
+
+    releaseSemaphore = swapchainSemaphore[imageIndex];
+}
+
 
 void Swapchain::destroy(vk::Device device) {
     for (auto& semaphore : swapchainSemaphore) {
