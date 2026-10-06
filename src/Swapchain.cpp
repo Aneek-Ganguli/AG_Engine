@@ -86,7 +86,7 @@ Swapchain::Swapchain(vk::Device device, vk::SurfaceKHR surface, vk::PhysicalDevi
 
 }
 
-void Swapchain::acquireImages(vk::Device device) {
+uint32_t Swapchain::acquireImages(vk::Device device) {
     auto acquire = device.acquireNextImageKHR(
         swapchain,
         std::numeric_limits<uint64_t>::max(),
@@ -99,9 +99,9 @@ void Swapchain::acquireImages(vk::Device device) {
         throw std::runtime_error("Failed to new frame");
     }
 
-    imageIndex = acquire.value;
+    releaseSemaphore = swapchainSemaphore[acquire.value];
 
-    releaseSemaphore = swapchainSemaphore[imageIndex];
+    return acquire.value;
 }
 
 
@@ -109,6 +109,34 @@ void Swapchain::destroy(vk::Device device) {
     for (auto& semaphore : swapchainSemaphore) {
         device.destroySemaphore(semaphore);
     }
+    for (auto& imageView : imageViews) {
+        device.destroyImageView(imageView);
+    }
+    imageViews.clear();
     device.destroySemaphore(acquireSemaphore);
     device.destroySwapchainKHR(swapchain);
+}
+
+void Swapchain::transitionImageLayoutToColour(vk::CommandBuffer commandBuffer, uint32_t imageIndex) {
+    transitionToColourImageBarrier.setImage(swapchainImages[imageIndex])
+                                  .setSubresourceRange(vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1))
+                                  .setOldLayout(vk::ImageLayout::eUndefined)
+                                  .setNewLayout(vk::ImageLayout::eColorAttachmentOptimal)
+                                  .setSrcStageMask(vk::PipelineStageFlagBits2::eAllCommands)
+                                  .setSrcAccessMask(vk::AccessFlagBits2::eMemoryWrite)
+                                  .setDstStageMask(vk::PipelineStageFlagBits2::eColorAttachmentOutput)
+                                  .setDstAccessMask(vk::AccessFlagBits2::eColorAttachmentWrite);
+
+
+}
+
+void Swapchain::transitionImageLayoutToPresent(vk::CommandBuffer commandBuffer, uint32_t imageIndex) {
+    transitionToPresentImageBarrier.setImage(swapchainImages[imageIndex])
+                                        .setSubresourceRange(vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1))
+                                        .setOldLayout(vk::ImageLayout::eColorAttachmentOptimal)
+                                        .setNewLayout(vk::ImageLayout::ePresentSrcKHR)
+                                        .setSrcStageMask(vk::PipelineStageFlagBits2::eColorAttachmentOutput)
+                                        .setSrcAccessMask(vk::AccessFlagBits2::eColorAttachmentWrite)
+                                        .setDstStageMask(vk::PipelineStageFlagBits2::eNone)
+                                        .setDstAccessMask(vk::AccessFlagBits2::eNone);
 }

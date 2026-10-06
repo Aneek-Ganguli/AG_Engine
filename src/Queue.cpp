@@ -27,7 +27,8 @@ Queue::Queue(vk::PhysicalDevice* physicalDevice, Device* device) {
     const char* deviceExtentions[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME , VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME};
 
     vk::PhysicalDeviceVulkan13Features deviceFeatures{};
-    deviceFeatures.setDynamicRendering(true);
+    deviceFeatures.setDynamicRendering(true)
+                  .setSynchronization2(true);
 
     vk::DeviceCreateInfo deviceCreateInfo{};
     deviceCreateInfo.setQueueCreateInfoCount(1)

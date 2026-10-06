@@ -53,3 +53,8 @@ void CommandBuffer::endRendering() {
 void CommandBuffer::end() {
     commandBuffer.data()->end();
 }
+
+void CommandBuffer::pipelineBarrier(int barrierCount,vk::ImageMemoryBarrier2 imageMemoryBarriers) {
+    commandBuffer.data()->pipelineBarrier2(vk::DependencyInfo().setImageMemoryBarrierCount(barrierCount)
+                                                                             .setImageMemoryBarriers(imageMemoryBarriers));
+}

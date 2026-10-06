@@ -9,6 +9,7 @@ namespace AG_EngineV2 {
             // vk::Device* getDevicePtr(){return &device;};
             void cleanUp();
         // private:
+            void waitIdle();
             vk::Device device{};
         };
     }
