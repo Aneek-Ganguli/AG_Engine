@@ -1,9 +1,9 @@
-#include "Queue.hpp"
-#include "PhysicalDevice.hpp"
+#include "core/Queue.hpp"
+#include "core/PhysicalDevice.hpp"
 #include <iostream>
 
-#include "Window.hpp"
-#include "Device.hpp"
+#include "core/Window.hpp"
+#include "core/Device.hpp"
 
 using namespace AG_EngineV2::Core;
 

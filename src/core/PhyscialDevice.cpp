@@ -1,7 +1,7 @@
-#include "PhysicalDevice.hpp"
+#include "core/PhysicalDevice.hpp"
 #include <iostream>
 
-#include "Window.hpp"
+#include "core/Window.hpp"
 
 using namespace AG_EngineV2::Core;
 

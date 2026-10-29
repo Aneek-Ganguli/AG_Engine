@@ -1,4 +1,4 @@
-#include "GraphicsPipeline.hpp"
+#include "core/GraphicsPipeline.hpp"
 using namespace AG_EngineV2::Core;
 
 GraphicsPipeline::GraphicsPipeline(vk::Device device) {

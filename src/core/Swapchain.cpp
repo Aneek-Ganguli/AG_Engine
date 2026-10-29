@@ -1,9 +1,9 @@
-#include "Swapchain.hpp"
+#include "core/Swapchain.hpp"
 
 #include <iostream>
 #include <ostream>
 
-#include "Surface.hpp"
+#include "core/Surface.hpp"
 
 using namespace AG_EngineV2::Core;
 

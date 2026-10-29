@@ -15,17 +15,17 @@ find_package(Vulkan REQUIRED)
 add_subdirectory(lib/glfw EXCLUDE_FROM_ALL)
 
 add_library(VulkanProjectV2 STATIC
-        src/Window.cpp
-        src/Logger.cpp
-        src/PhyscialDevice.cpp
-        src/Queue.cpp
-        src/Device.cpp
-        src/Surface.cpp
-        src/Swapchain.cpp
-        src/GraphicsPipeline.cpp
-        src/Fence.cpp
-        src/CommandPool.cpp
-        src/CommandBuffer.cpp
+        src/core/Window.cpp
+        src/core/Logger.cpp
+        src/core/PhyscialDevice.cpp
+        src/core/Queue.cpp
+        src/core/Device.cpp
+        src/core/Surface.cpp
+        src/core/Swapchain.cpp
+        src/core/GraphicsPipeline.cpp
+        src/core/Fence.cpp
+        src/core/CommandPool.cpp
+        src/core/CommandBuffer.cpp
 )
 
 target_include_directories(VulkanProjectV2

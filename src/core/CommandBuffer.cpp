@@ -1,6 +1,6 @@
-#include "CommandBuffer.hpp"
+#include "core/CommandBuffer.hpp"
 
-#include "Window.hpp"
+#include "core/Window.hpp"
 
 using namespace AG_EngineV2::Core;
 
