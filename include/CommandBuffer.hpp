@@ -5,6 +5,7 @@ namespace AG_EngineV2::Core {
     class CommandBuffer {
     public:
         CommandBuffer(vk::Device device, vk::CommandPool commandPool);
+        CommandBuffer(){};
         void begin();
         void end();
         std::vector<vk::CommandBuffer> commandBuffer;

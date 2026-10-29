@@ -7,7 +7,7 @@
 
 using namespace AG_EngineV2::Core;
 
-Swapchain::Swapchain(vk::Device device, vk::SurfaceKHR surface, vk::PhysicalDevice physicalDevice, vk::SurfaceCapabilitiesKHR surfaceCapabilities) {
+Swapchain::Swapchain(vk::Device device, vk::SurfaceKHR surface, vk::PhysicalDevice physicalDevice, vk::SurfaceCapabilitiesKHR surfaceCapabilities,int NumOfFramesInFlight) {
 
     std::vector<vk::SurfaceFormatKHR> surfaceFormats = physicalDevice.getSurfaceFormatsKHR(surface);
 
@@ -82,15 +82,19 @@ Swapchain::Swapchain(vk::Device device, vk::SurfaceKHR surface, vk::PhysicalDevi
         semaphore = device.createSemaphore(semaphoreCreateInfo, nullptr);
     }
 
-    acquireSemaphore = device.createSemaphore(semaphoreCreateInfo);
+    acquireSemaphore.resize(NumOfFramesInFlight);
+    releaseSemaphore.resize(NumOfFramesInFlight);
+    for (int i = 0; i < NumOfFramesInFlight; i++) {
+        acquireSemaphore[i] = device.createSemaphore(semaphoreCreateInfo);
+    }
 
 }
 
-uint32_t Swapchain::acquireImages(vk::Device device) {
+uint32_t Swapchain::acquireImages(vk::Device device,int currentFrame) {
     auto acquire = device.acquireNextImageKHR(
         swapchain,
         std::numeric_limits<uint64_t>::max(),
-        acquireSemaphore,
+        acquireSemaphore[currentFrame],
         VK_NULL_HANDLE
     );
 
@@ -99,13 +103,13 @@ uint32_t Swapchain::acquireImages(vk::Device device) {
         throw std::runtime_error("Failed to new frame");
     }
 
-    releaseSemaphore = swapchainSemaphore[acquire.value];
+    releaseSemaphore[currentFrame] = swapchainSemaphore[acquire.value];
 
     return acquire.value;
 }
 
 
-void Swapchain::destroy(vk::Device device) {
+void Swapchain::destroy(vk::Device device, int numOfFramesInFlight) {
     for (auto& semaphore : swapchainSemaphore) {
         device.destroySemaphore(semaphore);
     }
@@ -113,7 +117,9 @@ void Swapchain::destroy(vk::Device device) {
         device.destroyImageView(imageView);
     }
     imageViews.clear();
-    device.destroySemaphore(acquireSemaphore);
+    for (int i = 0; i < numOfFramesInFlight; i++) {
+        device.destroySemaphore(acquireSemaphore[i]);
+    }
     device.destroySwapchainKHR(swapchain);
 }
 
