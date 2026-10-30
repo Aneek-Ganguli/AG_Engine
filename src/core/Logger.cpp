@@ -16,6 +16,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
 
 Logger::Logger(vk::Instance instance) {
     dldi = vk::detail::DispatchLoaderDynamic(instance,vkGetInstanceProcAddr);
+
     debugMessenger = createMessenger(instance);
 }
 

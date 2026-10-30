@@ -2,13 +2,11 @@
 
 
 void main(){
-    vec3 position;
-    if(gl_VertexIndex == 0){
-        position = vec3(-1,-1,0);
-    }else if(gl_VertexIndex == 1){
-        position = vec3(3,-1,0);
-    }else{
-        position = vec3(-1,3,0);
-    }
-    gl_Position = vec4(position,1);
+    vec2 positions[3] = vec2[](
+    vec2(0.0, -0.5),   // Top center
+    vec2(0.5, 0.5),    // Bottom right
+    vec2(-0.5, 0.5)    // Bottom left
+    );
+
+    gl_Position = vec4(positions[gl_VertexIndex], 0.0, 1.0);
 }

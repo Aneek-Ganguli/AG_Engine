@@ -11,11 +11,11 @@ namespace AG_EngineV2 {
             Logger(vk::Instance instance);
             Logger(){};
             void cleanUp(vk::Instance instance);
+            vk::detail::DispatchLoaderDynamic dldi{};
 
 
         private:
             vk::DebugUtilsMessengerEXT debugMessenger{nullptr};
-            vk::detail::DispatchLoaderDynamic dldi{};
 
             vk::DebugUtilsMessengerEXT createMessenger(vk::Instance instance);
         };

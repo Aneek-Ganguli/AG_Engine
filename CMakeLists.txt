@@ -22,7 +22,7 @@ add_library(VulkanProjectV2 STATIC
         src/core/Device.cpp
         src/core/Surface.cpp
         src/core/Swapchain.cpp
-        src/core/GraphicsPipeline.cpp
+        src/GraphicsPipeline.cpp
         src/core/Fence.cpp
         src/core/CommandPool.cpp
         src/core/CommandBuffer.cpp

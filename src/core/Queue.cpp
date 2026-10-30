@@ -24,22 +24,27 @@ Queue::Queue(vk::PhysicalDevice* physicalDevice, Device* device) {
                    .setQueueCount(1)
                     .setPQueuePriorities(new float(1.0f));
 
-    const char* deviceExtentions[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME , VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME};
+    const char* deviceExtentions[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME , VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME, VK_EXT_SHADER_OBJECT_EXTENSION_NAME};
 
     vk::PhysicalDeviceVulkan13Features deviceFeatures{};
     deviceFeatures.setDynamicRendering(true)
                   .setSynchronization2(true);
+
+    vk::PhysicalDeviceShaderObjectFeaturesEXT shaderObjectFeatures{};
+    shaderObjectFeatures.setShaderObject(true)
+                        .setPNext(&deviceFeatures);
 
     vk::DeviceCreateInfo deviceCreateInfo{};
     deviceCreateInfo.setQueueCreateInfoCount(1)
                     .setPQueueCreateInfos(&queueCreateInfo)
                     .setEnabledExtensionCount(1)
                     .setPEnabledExtensionNames( deviceExtentions  )
-                    .setPNext(&deviceFeatures);
+                    .setPNext(&shaderObjectFeatures);
 
 
     device->device = physicalDevice->createDevice(deviceCreateInfo);
     graphicsQueue = device->device.getQueue(graphicsQueueFamilyIndex, 0);
+
 }
 
 void Queue::submitQueue(vk::Semaphore *acquireSemaphore, vk::PipelineStageFlags pipelineStages, vk::Semaphore *releaseSemaphore,vk::Fence fence, vk::CommandBuffer commandBuffer) {
