@@ -10,9 +10,12 @@ if(MSVC)
     add_link_options(/DEBUG) # Generate .pdb files for linker
 endif()
 
+set(GLM_BUILD_TESTS OFF CACHE INTERNAL "")
+
 find_package(Vulkan REQUIRED)
 
 add_subdirectory(lib/glfw EXCLUDE_FROM_ALL)
+add_subdirectory(lib/glm EXCLUDE_FROM_ALL)
 
 add_library(VulkanProjectV2 STATIC
         src/core/Window.cpp
@@ -22,10 +25,12 @@ add_library(VulkanProjectV2 STATIC
         src/core/Device.cpp
         src/core/Surface.cpp
         src/core/Swapchain.cpp
-        src/GraphicsPipeline.cpp
         src/core/Fence.cpp
         src/core/CommandPool.cpp
         src/core/CommandBuffer.cpp
+        src/Buffer.cpp
+        src/GraphicsPipeline.cpp
+        src/VertexBuffer.cpp
 )
 
 target_include_directories(VulkanProjectV2
@@ -35,12 +40,17 @@ target_include_directories(VulkanProjectV2
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lib/glfw/include>
         PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/lib
+        PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/lib/glm/glm
+        PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/lib/glm/
 )
 
 target_link_libraries(VulkanProjectV2
         PUBLIC
         Vulkan::Vulkan
         glfw
+        glm::glm
 )
 
 add_executable(VulkanApp src/main.cpp)

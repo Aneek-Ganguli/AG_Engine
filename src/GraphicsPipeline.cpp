@@ -7,7 +7,7 @@ void GraphicsPipeline::createDefaultPipeline(vk::CommandBuffer commandBuffer, vk
     commandBuffer.setViewportWithCount(vk::Viewport(0.0f, 0.0f, (float)windowWidth, (float)windowHeight, 0.0f, 1.0f));
     commandBuffer.setScissorWithCount(vk::Rect2D(vk::Offset2D(0, 0), vk::Extent2D(windowWidth, windowHeight)));
     commandBuffer.setRasterizerDiscardEnable(false);
-    commandBuffer.setVertexInputEXT( nullptr, nullptr,dldi);
+    // commandBuffer.setVertexInputEXT( nullptr, nullptr,dldi);
     commandBuffer.setPrimitiveTopology(vk::PrimitiveTopology::eTriangleList);
     commandBuffer.setPrimitiveRestartEnable(false);
     commandBuffer.setRasterizationSamplesEXT(vk::SampleCountFlagBits::e1,dldi);

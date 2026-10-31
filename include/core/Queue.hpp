@@ -11,9 +11,9 @@ namespace AG_EngineV2:: Core {
         void submitQueue(vk::Semaphore *acquireSemaphore, vk::PipelineStageFlags pipelineStages, vk::Semaphore *releaseSemaphore,vk::Fence fence,vk::CommandBuffer commandBuffer);
         void presentQueue(vk::Semaphore *releaseSemaphore, vk::SwapchainKHR *swapchain, uint32_t* imageIndex);
         uint32_t graphicsQueueFamilyIndex{0};
+        vk::Queue graphicsQueue;
     private:
         vk::PresentInfoKHR presentInfo{};
-        vk::Queue graphicsQueue;
     };
 }
 
