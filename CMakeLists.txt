@@ -20,7 +20,7 @@ add_subdirectory(lib/glm EXCLUDE_FROM_ALL)
 add_library(VulkanProjectV2 STATIC
         src/core/Window.cpp
         src/core/Logger.cpp
-        src/core/PhyscialDevice.cpp
+        src/core/PhysicalDevice.cpp
         src/core/Queue.cpp
         src/core/Device.cpp
         src/core/Surface.cpp
@@ -31,6 +31,7 @@ add_library(VulkanProjectV2 STATIC
         src/Buffer.cpp
         src/GraphicsPipeline.cpp
         src/VertexBuffer.cpp
+        src/IndexBuffer.cpp
 )
 
 target_include_directories(VulkanProjectV2

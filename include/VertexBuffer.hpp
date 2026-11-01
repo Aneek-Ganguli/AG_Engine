@@ -5,6 +5,7 @@
 #include <glm/glm.hpp>
 
 namespace AG_EngineV2 {
+    void copyBuffer(vk::Buffer srcBuffer,vk::Buffer dstBuffer, vk::DeviceSize size, vk::Device device, Core::Queue* queue);
     class VertexBuffer {
     public:
         VertexBuffer(vk::Device device, vk::PhysicalDevice physicalDevice, vk::CommandPool commandPool, Core::Queue* queue, std::vector<glm::vec3> vertices);

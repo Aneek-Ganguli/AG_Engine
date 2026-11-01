@@ -7,7 +7,8 @@
 
 using namespace AG_EngineV2;
 using namespace AG_EngineV2::Core;
-void copyBuffer(vk::Buffer srcBuffer,vk::Buffer dstBuffer, vk::DeviceSize size, vk::Device device,Queue* queue) {
+
+void AG_EngineV2::copyBuffer(vk::Buffer srcBuffer,vk::Buffer dstBuffer, vk::DeviceSize size, vk::Device device,Queue* queue) {
     CommandPool copyCommandPool(device,queue->graphicsQueueFamilyIndex);
     CommandBuffer copyCommandBuffer(device,copyCommandPool.commandPool);
 
@@ -52,6 +53,8 @@ AG_EngineV2::VertexBuffer::VertexBuffer(vk::Device device, vk::PhysicalDevice ph
      vertexBuffer = Buffer(device,physicalDevice,bufferSize, vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer, vk::MemoryPropertyFlagBits::eDeviceLocal);
 
     copyBuffer(stagingBuffer.buffer,vertexBuffer.buffer,bufferSize,device,queue);
+
+    stagingBuffer.destroy(device);
 
     bindingDesc.binding = 0;
     bindingDesc.stride = sizeof(vertices[0]);
