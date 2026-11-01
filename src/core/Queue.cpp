@@ -24,7 +24,7 @@ Queue::Queue(vk::PhysicalDevice* physicalDevice, Device* device) {
                    .setQueueCount(1)
                     .setPQueuePriorities(new float(1.0f));
 
-    const char* deviceExtentions[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME , VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME, VK_EXT_SHADER_OBJECT_EXTENSION_NAME};
+    const char* deviceExtentions[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME , VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME, VK_EXT_SHADER_OBJECT_EXTENSION_NAME, VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME};
 
     vk::PhysicalDeviceVulkan13Features deviceFeatures{};
     deviceFeatures.setDynamicRendering(true)

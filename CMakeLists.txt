@@ -32,6 +32,8 @@ add_library(VulkanProjectV2 STATIC
         src/GraphicsPipeline.cpp
         src/VertexBuffer.cpp
         src/IndexBuffer.cpp
+        src/DescriptorSet.cpp
+        src/UniformBuffer.cpp
 )
 
 target_include_directories(VulkanProjectV2

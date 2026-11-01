@@ -83,7 +83,6 @@ void Window::layerInitialization() {
     layers.push_back("VK_LAYER_KHRONOS_shader_object");
     if (debug) {
         layers.push_back("VK_LAYER_KHRONOS_validation");
-        layers.push_back("VK_LAYER_LUNARG_api_dump");
         std::cout << checkLayers(layers) << std::endl;
     }
 }

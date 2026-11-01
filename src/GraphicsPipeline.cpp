@@ -21,6 +21,7 @@ void GraphicsPipeline::createDefaultPipeline(vk::CommandBuffer commandBuffer, vk
     commandBuffer.setDepthWriteEnable(false);
     commandBuffer.setDepthBiasEnable(false);
     commandBuffer.setStencilTestEnable(false);
-    commandBuffer.setColorBlendEnableEXT(0,true,dldi);
+    commandBuffer.setColorBlendEnableEXT(0,vk::False,dldi);
+    // commandBuffer.setColorBlendEquationEXT(0,)
     commandBuffer.setColorWriteMaskEXT(0,vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA,dldi);
 }

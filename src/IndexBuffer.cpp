@@ -19,7 +19,7 @@ IndexBuffer::IndexBuffer(vk::Device device, vk::PhysicalDevice physicalDevice, v
     device.unmapMemory(stagingBuffer.memory);
 
 
-    indexBuffer = Buffer(device,physicalDevice,bufferSize, vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer, vk::MemoryPropertyFlagBits::eDeviceLocal);
+    indexBuffer = Buffer(device,physicalDevice,bufferSize, vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eIndexBuffer, vk::MemoryPropertyFlagBits::eDeviceLocal);
 
     copyBuffer(stagingBuffer.buffer,indexBuffer.buffer,bufferSize,device,queue);
     stagingBuffer.destroy(device);
