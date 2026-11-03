@@ -1,9 +1,9 @@
 #include "DescriptorSet.hpp"
 
 using namespace AG_EngineV2;
-DescriptorSet::DescriptorSet(vk::Device device) {
-    layoutBinding.setBinding(0)
-                 .setDescriptorType(vk::DescriptorType::eUniformBuffer)
+DescriptorSet::DescriptorSet(vk::Device device,vk::DescriptorType type, int binding) {
+    layoutBinding.setBinding(binding)
+                 .setDescriptorType(type)
                  .setDescriptorCount(1)
                  .setStageFlags(vk::ShaderStageFlagBits::eAll);
 
@@ -18,18 +18,10 @@ DescriptorSet::DescriptorSet(vk::Device device) {
     }
 
 
-    pipelineLayoutCreateInfo.setSetLayoutCount(1)
-                            .setPSetLayouts(&descriptorSetLayout);
-
-    pipelineLayout = device.createPipelineLayout(pipelineLayoutCreateInfo);
-    if (pipelineLayout == nullptr) {
-        throw std::runtime_error("Failed to create pipeline layout");
-    }
-
 }
 
 void DescriptorSet::destroy(vk::Device device) {
-    device.destroyPipelineLayout(pipelineLayout);
+
     device.destroyDescriptorSetLayout(descriptorSetLayout);
 }
 

@@ -2,7 +2,7 @@
 
 using namespace AG_EngineV2;
 
-UniformBuffer::UniformBuffer(vk::Device device,vk::PhysicalDevice physicalDevice, vk::DeviceSize size, void *uniformData, uint32_t offset)
+UniformBuffer::UniformBuffer(vk::Device device,vk::PhysicalDevice physicalDevice, vk::DeviceSize size, void *uniformData, uint32_t offset, uint32_t dstArrayElement , uint32_t dstBinding, vk::DescriptorType type)
     :size(size) {
 
     uniformBuffer = Buffer(device, physicalDevice, size, vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eUniformBuffer, vk::MemoryPropertyFlagBits::eHostVisible |
@@ -15,8 +15,6 @@ UniformBuffer::UniformBuffer(vk::Device device,vk::PhysicalDevice physicalDevice
     // 2. Copy the data into the mapped pointer
     memcpy(data, uniformData, size);
 
-    // 3. Unmap the memory (or keep it mapped persistently if preferred)
-    // device.unmapMemory(uniformBuffer.memory);
 
 
     bufferInfo.buffer = uniformBuffer.buffer;
@@ -24,9 +22,9 @@ UniformBuffer::UniformBuffer(vk::Device device,vk::PhysicalDevice physicalDevice
     bufferInfo.range = size;
 
 
-    descriptorWrite.dstBinding = 0;
-    descriptorWrite.dstArrayElement = 0;
-    descriptorWrite.descriptorType = vk::DescriptorType::eUniformBuffer;
+    descriptorWrite.dstBinding = dstBinding;
+    descriptorWrite.dstArrayElement = dstArrayElement;
+    descriptorWrite.descriptorType = type;
     descriptorWrite.descriptorCount = 1;
     descriptorWrite.pBufferInfo = &bufferInfo;
 }

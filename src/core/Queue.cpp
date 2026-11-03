@@ -34,12 +34,19 @@ Queue::Queue(vk::PhysicalDevice* physicalDevice, Device* device) {
     shaderObjectFeatures.setShaderObject(true)
                         .setPNext(&deviceFeatures);
 
+    vk::PhysicalDeviceDescriptorIndexingFeatures descriptorIndexingFeatures{};
+    descriptorIndexingFeatures.setShaderSampledImageArrayNonUniformIndexing(true)
+                              .setDescriptorBindingSampledImageUpdateAfterBind(true)
+                              .setDescriptorBindingPartiallyBound(true)
+                              .setRuntimeDescriptorArray(true)
+                              .setPNext(&shaderObjectFeatures);
+
     vk::DeviceCreateInfo deviceCreateInfo{};
     deviceCreateInfo.setQueueCreateInfoCount(1)
                     .setPQueueCreateInfos(&queueCreateInfo)
                     .setEnabledExtensionCount(1)
                     .setPEnabledExtensionNames( deviceExtentions  )
-                    .setPNext(&shaderObjectFeatures);
+                    .setPNext(&descriptorIndexingFeatures);
 
 
     device->device = physicalDevice->createDevice(deviceCreateInfo);
