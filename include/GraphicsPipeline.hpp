@@ -8,6 +8,6 @@ namespace AG_EngineV2 {
     // make new class for every new pipeline
     class GraphicsPipeline {
     public:
-        void createDefaultPipeline(vk::CommandBuffer commandBuffer, vk::detail::DispatchLoaderDynamic dldi,vk::ArrayProxy<const vk::ShaderStageFlagBits> stages, vk::ArrayProxy<const vk::ShaderEXT> shaders, int windowWidth, int windowHeight,vk::RenderingAttachmentInfo &depth);
+        void createDefaultPipeline(vk::CommandBuffer commandBuffer, vk::DispatchLoaderDynamic dldi,vk::ArrayProxy<const vk::ShaderStageFlagBits> stages, vk::ArrayProxy<const vk::ShaderEXT> shaders, int windowWidth, int windowHeight,vk::RenderingAttachmentInfo &depth);
     };
 }
