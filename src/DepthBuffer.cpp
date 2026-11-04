@@ -83,6 +83,11 @@ namespace AG_EngineV2 {
         }
 
         transitionLayout(device, queue, image, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal);
+        depthAttachmentInfo.imageView = view;
+        depthAttachmentInfo.imageLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
+        depthAttachmentInfo.loadOp = vk::AttachmentLoadOp::eClear;
+        depthAttachmentInfo.storeOp = vk::AttachmentStoreOp::eDontCare;
+        depthAttachmentInfo.clearValue.depthStencil = vk::ClearDepthStencilValue{1.0f, 0}; // Clear depth to 1.0
     }
 
     void DepthBuffer::transitionLayout(vk::Device device, Core::Queue* queue, vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout) {

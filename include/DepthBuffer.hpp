@@ -17,7 +17,7 @@ namespace AG_EngineV2 {
 
         // Finds a supported depth format on the physical device
         static vk::Format findDepthFormat(vk::PhysicalDevice physicalDevice);
-
+        vk::RenderingAttachmentInfo depthAttachmentInfo{};
         // Helper to transition depth image layout for dynamic rendering
         static void transitionLayout(
             vk::Device device,
