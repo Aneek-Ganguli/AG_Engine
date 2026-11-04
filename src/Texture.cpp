@@ -58,6 +58,19 @@ Texture::Texture(vk::Device device,Queue* queue, vk::PhysicalDevice physicalDevi
     if (device.createSampler(&samplerInfo, nullptr, &sampler) != vk::Result::eSuccess) {
         throw std::runtime_error("failed to create texture sampler!");
     }
+
+
+    imageInfo.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+    imageInfo.imageView = view;
+    imageInfo.sampler = sampler;
+
+
+    textureWrite.dstBinding = 1; // Binding index inside Set 1
+    textureWrite.dstArrayElement = 0;
+    textureWrite.descriptorType = vk::DescriptorType::eCombinedImageSampler;
+    textureWrite.descriptorCount = 1;
+    textureWrite.pImageInfo = &imageInfo;
+
 }
 
 void Texture::transitionImageLayout(vk::Device device, Core::Queue* queue, vk::Image image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout, uint32_t mipLevels) {

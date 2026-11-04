@@ -18,5 +18,7 @@ namespace AG_EngineV2 {
         void destroy(vk::Device device);
         vk::DeviceMemory textureImageMemory;
         Buffer stagingBuffer;
+        vk::DescriptorImageInfo imageInfo{};
+        vk::WriteDescriptorSet textureWrite{};
     };
 }
