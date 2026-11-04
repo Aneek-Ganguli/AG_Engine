@@ -3,7 +3,7 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "Buffer.hpp"
-#include "stb_image.h"
+#include "../lib/stb/stb_image.h"
 #include "core/CommandBuffer.hpp"
 #include "core/CommmandPool.hpp"
 
@@ -60,10 +60,9 @@ Texture::Texture(vk::Device device,Queue* queue, vk::PhysicalDevice physicalDevi
     }
 }
 
-void Texture::transitionImageLayout(vk::Device device,Core::Queue* queue,vk::Image image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout) {
-
-    CommandPool copyCommandPool(device,queue->graphicsQueueFamilyIndex);
-    CommandBuffer copyCommandBuffer(device,copyCommandPool.commandPool);
+void Texture::transitionImageLayout(vk::Device device, Core::Queue* queue, vk::Image image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout, uint32_t mipLevels) {
+    CommandPool copyCommandPool(device, queue->graphicsQueueFamilyIndex);
+    CommandBuffer copyCommandBuffer(device, copyCommandPool.commandPool);
 
     copyCommandBuffer.begin();
 
@@ -74,18 +73,9 @@ void Texture::transitionImageLayout(vk::Device device,Core::Queue* queue,vk::Ima
     barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.image = image;
 
-    // if (newLayout == vk::ImageLayout::eDepthStencilAttachmentOptimal) {
-    //     barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-    //
-    //     // if (hasStencilComponent(format)) {
-    //     //     barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
-    //     // }
-    // } else {
-    // }
-
     barrier.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
     barrier.subresourceRange.baseMipLevel = 0;
-    barrier.subresourceRange.levelCount = 1;
+    barrier.subresourceRange.levelCount = mipLevels; // FIXED: Cover all mip levels!
     barrier.subresourceRange.baseArrayLayer = 0;
     barrier.subresourceRange.layerCount = 1;
 
@@ -108,22 +98,28 @@ void Texture::transitionImageLayout(vk::Device device,Core::Queue* queue,vk::Ima
         throw std::invalid_argument("unsupported layout transition!");
     }
 
-
-
     copyCommandBuffer.commandBuffer[0].pipelineBarrier(
-            sourceStage, destinationStage,
-            {},
-            nullptr, nullptr,
-            barrier
+        sourceStage, destinationStage,
+        {},
+        nullptr, nullptr,
+        barrier
     );
 
-
     copyCommandBuffer.end();
+
+    vk::SubmitInfo submitInfo{};
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &copyCommandBuffer.commandBuffer[0];
+
+    if (queue->graphicsQueue.submit(1, &submitInfo, nullptr) != vk::Result::eSuccess) {
+        throw std::runtime_error("failed to submit layout transition command buffer!");
+    }
+    queue->graphicsQueue.waitIdle();
+
     device.resetCommandPool(copyCommandPool.commandPool, {});
     device.freeCommandBuffers(copyCommandPool.commandPool, 1, &copyCommandBuffer.commandBuffer[0]);
     device.destroyCommandPool(copyCommandPool.commandPool);
 }
-
 
 void Texture::createImageTexture(vk::Device device,Queue* queue,vk::PhysicalDevice physicalDevice,const std::string& texturePath, bool flipVertical) {
 stbi_set_flip_vertically_on_load(flipVertical);
@@ -162,14 +158,14 @@ stbi_set_flip_vertically_on_load(flipVertical);
     allocInfo.allocationSize = memRequirements.size;
     allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal, &physicalDevice);
 
-    vk::DeviceMemory textureImageMemory; // Store this in your class member if you need to free it later
+     // Store this in your class member if you need to free it later
     if (device.allocateMemory(&allocInfo, nullptr, &textureImageMemory) != vk::Result::eSuccess) {
         throw std::runtime_error("failed to allocate image memory!");
     }
     device.bindImageMemory(textureImage, textureImageMemory, 0);
 
     // 3. Create Staging Buffer and copy pixel data
-    Buffer stagingBuffer(
+    stagingBuffer = Buffer(
         device,
         physicalDevice,
         imageSize,
@@ -184,7 +180,7 @@ stbi_set_flip_vertically_on_load(flipVertical);
     memcpy(mem, pixels, static_cast<size_t>(imageSize));
     device.unmapMemory(stagingBuffer.memory);
 
-    transitionImageLayout(device,queue,textureImage, vk::Format::eR8G8B8A8Srgb, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
+    transitionImageLayout(device,queue,textureImage, vk::Format::eR8G8B8A8Srgb, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal,mipLevels);
 
 
     vk::BufferImageCopy region{};
@@ -320,14 +316,24 @@ stbi_set_flip_vertically_on_load(flipVertical);
     stbi_image_free(pixels);
 
     copyCommandBuffer.end();
+
+    vk::SubmitInfo submitInfo{};
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &copyCommandBuffer.commandBuffer[0];
+
+    if (queue->graphicsQueue.submit(1, &submitInfo, nullptr) != vk::Result::eSuccess) {
+        throw std::runtime_error("failed to submit texture command buffer!");
+    }
+    queue->graphicsQueue.waitIdle();
+
     device.resetCommandPool(copyCommandPool.commandPool, {});
     device.freeCommandBuffers(copyCommandPool.commandPool, 1, &copyCommandBuffer.commandBuffer[0]);
     device.destroyCommandPool(copyCommandPool.commandPool);
-    device.freeMemory(textureImageMemory);
-    stagingBuffer.destroy(device);
 }
 
 void Texture::destroy(vk::Device device) {
+    device.freeMemory(textureImageMemory);
+    stagingBuffer.destroy(device);
     device.destroyImageView(view);
     device.destroySampler(sampler);
     device.destroyImage(textureImage);

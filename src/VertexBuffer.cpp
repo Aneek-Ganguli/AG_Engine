@@ -36,7 +36,7 @@ void AG_EngineV2::copyBuffer(vk::Buffer srcBuffer,vk::Buffer dstBuffer, vk::Devi
     device.destroyCommandPool(copyCommandPool.commandPool);
 }
 
-AG_EngineV2::VertexBuffer::VertexBuffer(vk::Device device, vk::PhysicalDevice physicalDevice, vk::CommandPool commandPool, Queue* queue, std::vector<glm::vec3> vertices) {
+AG_EngineV2::VertexBuffer::VertexBuffer(vk::Device device, vk::PhysicalDevice physicalDevice, vk::CommandPool commandPool, Queue* queue, const std::vector<VertexData> vertices) {
     vk::DeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
 
      stagingBuffer = Buffer(device,physicalDevice,bufferSize, vk::BufferUsageFlagBits::eTransferSrc, vk::MemoryPropertyFlagBits::eHostVisible
@@ -61,11 +61,20 @@ AG_EngineV2::VertexBuffer::VertexBuffer(vk::Device device, vk::PhysicalDevice ph
     bindingDesc.inputRate = vk::VertexInputRate::eVertex;
     bindingDesc.divisor = 1;
 
-    attribDesc.location = 0;
-    attribDesc.binding = 0;
-    attribDesc.format = vk::Format::eR32G32B32Sfloat;
-    attribDesc.offset = 0;
+    attribDesc[0].location = 0;
+    attribDesc[0].binding = 0;
+    attribDesc[0].format = vk::Format::eR32G32B32Sfloat;
+    attribDesc[0].offset = offsetof(VertexData,vertices);
 
+    attribDesc[1].location = 1;
+    attribDesc[1].binding = 0;
+    attribDesc[1].format = vk::Format::eR32G32B32Sfloat;
+    attribDesc[1].offset = offsetof(VertexData,color);
+
+    attribDesc[2].location = 2;
+    attribDesc[2].binding = 0;
+    attribDesc[2].format = vk::Format::eR32G32Sfloat;
+    attribDesc[2].offset = offsetof(VertexData,texCoord) ;
 }
 
 void VertexBuffer::destroy(vk::Device device) {
