@@ -35,6 +35,7 @@ add_library(VulkanProjectV2 STATIC
         src/DescriptorSet.cpp
         src/UniformBuffer.cpp
         src/Texture.cpp
+        src/DepthBuffer.cpp
 )
 
 target_include_directories(VulkanProjectV2

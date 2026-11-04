@@ -5,7 +5,7 @@
 #include "Buffer.hpp"
 #include "../lib/stb/stb_image.h"
 #include "core/CommandBuffer.hpp"
-#include "core/CommmandPool.hpp"
+#include "core/CommandPool.hpp"
 
 using namespace AG_EngineV2;
 using namespace AG_EngineV2::Core;
