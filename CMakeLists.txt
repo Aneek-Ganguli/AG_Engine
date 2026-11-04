@@ -57,6 +57,3 @@ target_link_libraries(VulkanProjectV2
         glfw
         glm::glm
 )
-
-add_executable(VulkanApp src/main.cpp)
-target_link_libraries(VulkanApp PUBLIC VulkanProjectV2)
