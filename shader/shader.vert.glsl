@@ -7,8 +7,14 @@ layout(location = 2) in vec2 uv;
 layout(location = 0) out vec3 fragColor;
 layout(location = 1) out vec2 fragTexCoord;
 
+layout(binding = 0, std140) uniform UniformBufferObject {
+    mat4 model;
+    mat4 view;
+    mat4 proj;
+} ubo;
+
 void main() {
-    gl_Position = vec4(inPosition, 1.0);
+    gl_Position = vec4(inPosition, 1.0) * ubo.proj * ubo.view * ubo.model;
     fragColor = color;
     fragTexCoord = uv;
 }

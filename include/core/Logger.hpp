@@ -11,7 +11,7 @@ namespace AG_EngineV2 {
             Logger(vk::Instance instance);
             Logger(){};
             void cleanUp(vk::Instance instance);
-            vk::DispatchLoaderDynamic dldi{};
+            vk::detail::DispatchLoaderDynamic dldi{};
 
 
         private:

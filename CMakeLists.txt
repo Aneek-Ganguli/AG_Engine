@@ -36,6 +36,7 @@ add_library(VulkanProjectV2 STATIC
         src/UniformBuffer.cpp
         src/Texture.cpp
         src/DepthBuffer.cpp
+        src/Application.cpp
 )
 
 target_include_directories(VulkanProjectV2
@@ -57,3 +58,10 @@ target_link_libraries(VulkanProjectV2
         glfw
         glm::glm
 )
+
+option(BUILD_TESTING "Build the test suite executable" OFF)
+
+if(BUILD_TESTING)
+    add_executable(VulkanApp ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp)
+    target_link_libraries(VulkanApp PRIVATE VulkanProjectV2)
+endif()

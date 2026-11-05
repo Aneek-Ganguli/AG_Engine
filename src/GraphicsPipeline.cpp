@@ -2,7 +2,7 @@
 
 using namespace AG_EngineV2;
 
-void GraphicsPipeline::createDefaultPipeline(vk::CommandBuffer commandBuffer, vk::DispatchLoaderDynamic dldi,vk::ArrayProxy<const vk::ShaderStageFlagBits> stages, vk::ArrayProxy<const vk::ShaderEXT> shaders, int windowWidth, int windowHeight,vk::RenderingAttachmentInfo &depth) {
+void GraphicsPipeline::createDefaultPipeline(vk::CommandBuffer commandBuffer, vk::detail::DispatchLoaderDynamic dldi,vk::ArrayProxy<const vk::ShaderStageFlagBits> stages, vk::ArrayProxy<const vk::ShaderEXT> shaders, int windowWidth, int windowHeight,vk::RenderingAttachmentInfo &depth) {
     commandBuffer.bindShadersEXT(stages,shaders,dldi);
     commandBuffer.setViewportWithCount(vk::Viewport(0.0f, 0.0f, (float)windowWidth, (float)windowHeight, 0.0f, 1.0f));
     commandBuffer.setScissorWithCount(vk::Rect2D(vk::Offset2D(0, 0), vk::Extent2D(windowWidth, windowHeight)));
