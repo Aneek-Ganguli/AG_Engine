@@ -1,0 +1,29 @@
+#pragma once
+#include "Application.hpp"
+#include "Texture.hpp"
+#include "UniformBuffer.hpp"
+
+using namespace AG_EngineV2::Core;
+using namespace AG_EngineV2;
+
+namespace AG_EngineV2 {
+    struct MVP {
+        glm::mat4 view;
+        glm::mat4 projection;
+        glm::mat4 viewProjection;
+    };
+    class Entity {
+    public:
+        Application* app;
+        Entity(Application *app, std::vector<VertexData> vertex, std::vector<uint16_t> indices,  bool texture, Texture image, UniformBuffer  ubo);
+        VertexBuffer vertexBuffer;
+        IndexBuffer indexBuffer;
+        UniformBuffer uniformBuffer{};
+        Texture image{};
+        std::vector<vk::WriteDescriptorSet> descriptorWrites;
+        size_t indexCount;
+        void draw();
+        void destroy();
+        bool texture;
+    };
+}

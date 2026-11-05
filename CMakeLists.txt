@@ -37,6 +37,7 @@ add_library(VulkanProjectV2 STATIC
         src/Texture.cpp
         src/DepthBuffer.cpp
         src/Application.cpp
+        src/Entity.cpp
 )
 
 target_include_directories(VulkanProjectV2

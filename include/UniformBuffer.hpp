@@ -5,6 +5,7 @@
 namespace  AG_EngineV2 {
     class UniformBuffer {
     public:
+        UniformBuffer()=default;
         UniformBuffer(vk::Device device, vk::PhysicalDevice physicalDevice, vk::DeviceSize size, void *uniformData, uint32_t offset, uint32_t dstArrayElement , uint32_t dstBinding,vk::DescriptorType type);
         Buffer uniformBuffer;
         vk::DeviceSize size;
