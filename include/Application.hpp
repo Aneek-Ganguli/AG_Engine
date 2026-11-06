@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 
+#include "BindlessTextures.hpp"
 #include "DepthBuffer.hpp"
 #include "DescriptorSet.hpp"
 #include "GraphicsPipeline.hpp"
@@ -44,6 +45,7 @@ namespace AG_EngineV2 {
         // std::vector<DescriptorSet> descriptorSets;
         // std::vector<vk::DescriptorSetLayout> descriptorSetLayouts;
         vk::DescriptorSetLayout pushDescriptorSetLayout;
+        BindlessTextures bindlessTextures;
         vk::ShaderEXT vertexShader{};
         vk::ShaderEXT textureFragmentShader{};
         vk::ShaderEXT nonTextureFragmentShader{};

@@ -20,5 +20,6 @@ namespace AG_EngineV2 {
         Buffer stagingBuffer;
         vk::DescriptorImageInfo imageInfo{};
         vk::WriteDescriptorSet textureWrite{};
+        void update(int index, vk::DescriptorSet bindlessTextureDescriptorSet, vk::Device device);
     };
 }

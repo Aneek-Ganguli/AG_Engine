@@ -17,15 +17,17 @@ namespace AG_EngineV2 {
     class Entity {
     public:
         Application* app;
-        Entity(Application *app, std::vector<VertexData> vertex, std::vector<uint16_t> indices,  bool texture, Texture image, UniformBuffer  ubo);
+        Entity(Application *app, std::vector<VertexData> vertex, std::vector<uint16_t> indices, uint32_t _index, bool texture, Texture _image, UniformBuffer indexUBO, UniformBuffer  ubo);
         VertexBuffer vertexBuffer;
         IndexBuffer indexBuffer;
         UniformBuffer uniformBuffer{};
+        UniformBuffer indexUBO{};
         Texture image{};
         std::vector<vk::WriteDescriptorSet> descriptorWrites;
         size_t indexCount;
         void draw();
         void destroy();
         bool texture;
+        uint32_t index;
     };
 }

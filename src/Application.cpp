@@ -15,7 +15,8 @@ AG_EngineV2::Application::Application(std::string name, int width, int height)
      queue(&physicalDevice.physicalDevice,&device),
      surface(window.getInstance(),physicalDevice.physicalDevice,window.window),
      swapchain(device.device,surface.surface,physicalDevice.physicalDevice,surface.surfaceCapabilities, NumFramesInFlight),
-     graphicsPipeline()
+     graphicsPipeline(),
+     bindlessTextures(device.device)
 {
     for (int i = 0; i < NumFramesInFlight; i++) {
         fence[i]  = Fence(device.device);
@@ -24,13 +25,14 @@ AG_EngineV2::Application::Application(std::string name, int width, int height)
     }
 
     DescriptorSet uniformDescriptorSet(device.device, vk::DescriptorType::eUniformBuffer,0);
-    DescriptorSet imageDescriptorSet(device.device, vk::DescriptorType::eCombinedImageSampler,1);
+    DescriptorSet imageIndexDescriptorSet(device.device, vk::DescriptorType::eUniformBuffer,1);
 
     std::array<vk::DescriptorSetLayoutBinding,2> descriptorSetLayoutBinding;
     descriptorSetLayoutBinding[0] = uniformDescriptorSet.layoutBinding;
-    descriptorSetLayoutBinding[1] = imageDescriptorSet.layoutBinding;
+    descriptorSetLayoutBinding[1] = imageIndexDescriptorSet.layoutBinding;
     uniformDescriptorSet.destroy(device.device);
-    imageDescriptorSet.destroy(device.device);
+    imageIndexDescriptorSet.destroy(device.device);
+
 
     vk::DescriptorSetLayoutCreateInfo layoutInfo{};
     layoutInfo.setFlags(vk::DescriptorSetLayoutCreateFlagBits::ePushDescriptorKHR)
@@ -38,6 +40,10 @@ AG_EngineV2::Application::Application(std::string name, int width, int height)
               .setPBindings(descriptorSetLayoutBinding.data());
     pushDescriptorSetLayout = device.device.createDescriptorSetLayout(layoutInfo);
 
+    std::vector<vk::DescriptorSetLayout> descriptorSetLayouts = {
+            pushDescriptorSetLayout,
+            bindlessTextures.descriptorSetLayout
+        };
 
 
     vk::ShaderCreateInfoEXT shaderCreateInfo{};
@@ -47,8 +53,8 @@ AG_EngineV2::Application::Application(std::string name, int width, int height)
                     .setPCode( reinterpret_cast<const uint32_t*>(shader_vert_spv))
                     .setPName("main")
                     .setStage(vk::ShaderStageFlagBits::eVertex)
-                    .setSetLayouts(pushDescriptorSetLayout)
-                    .setSetLayoutCount(1)
+                    .setSetLayouts(descriptorSetLayouts)
+                    .setSetLayoutCount(descriptorSetLayouts.size())
                     .setNextStage(vk::ShaderStageFlagBits::eFragment);
 
     vertexShader = device.device.createShaderEXT(shaderCreateInfo,nullptr,logger.dldi).value;
@@ -76,8 +82,8 @@ AG_EngineV2::Application::Application(std::string name, int width, int height)
     nonTextureShaders = { vertexShader, nonTextureFragmentShader};
 
     vk::PipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
-    pipelineLayoutCreateInfo.setSetLayoutCount(1)
-                            .setPSetLayouts(&pushDescriptorSetLayout);
+    pipelineLayoutCreateInfo.setSetLayoutCount(descriptorSetLayouts.size())
+                            .setPSetLayouts(descriptorSetLayouts.data());
 
 
     pipelineLayout = device.device.createPipelineLayout(pipelineLayoutCreateInfo);
@@ -91,6 +97,7 @@ AG_EngineV2::Application::Application(std::string name, int width, int height)
 
 void Application::destroy() {
     depthBuffer.destroy(device.device);
+    bindlessTextures.destroy(device.device);
     device.device.destroyDescriptorSetLayout(pushDescriptorSetLayout);
     device.device.destroyPipelineLayout(pipelineLayout);
     device.device.destroyShaderEXT(nonTextureFragmentShader, nullptr,logger.dldi);
@@ -132,6 +139,7 @@ void Application::bindPipeline(bool textures) {
     if (textures){
         graphicsPipeline.createDefaultPipeline(commandBuffer[currentFrame].commandBuffer[0],logger.dldi,
        shaderStages,textureShaders,window.width, window.height, depthBuffer.depthAttachmentInfo);
+        bindlessTextures.bind(commandBuffer[currentFrame].commandBuffer[0],pipelineLayout);
     }
     else {
         graphicsPipeline.createDefaultPipeline(commandBuffer[currentFrame].commandBuffer[0],logger.dldi,

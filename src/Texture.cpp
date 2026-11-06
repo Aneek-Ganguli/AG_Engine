@@ -351,3 +351,16 @@ void Texture::destroy(vk::Device device) {
     device.destroySampler(sampler);
     device.destroyImage(textureImage);
 }
+
+void Texture::update(int index, vk::DescriptorSet bindlessTextureDescriptorSet, vk::Device device) {
+
+    vk::WriteDescriptorSet write{};
+    write.dstSet = bindlessTextureDescriptorSet;
+    write.dstBinding = 1;
+    write.dstArrayElement = index; // The unique slot assigned to this texture
+    write.descriptorType = vk::DescriptorType::eCombinedImageSampler;
+    write.descriptorCount = 1;
+    write.pImageInfo = &imageInfo;
+
+    device.updateDescriptorSets(1, &write, 0, nullptr);
+}
