@@ -11,10 +11,12 @@ layout(binding = 0, std140) uniform UniformBufferObject {
     mat4 model;
     mat4 view;
     mat4 proj;
+    vec2 uvOffset;
+    vec2 uvScale;
 } ubo;
 
 void main() {
     gl_Position = vec4(inPosition, 1.0) * ubo.proj * ubo.view * ubo.model;
     fragColor = color;
-    fragTexCoord = uv;
+    fragTexCoord = (uv - ubo.uvOffset) * ubo.uvScale;
 }

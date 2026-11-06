@@ -7,10 +7,12 @@ using namespace AG_EngineV2::Core;
 using namespace AG_EngineV2;
 
 namespace AG_EngineV2 {
-    struct MVP {
+    struct UBO {
         glm::mat4 view;
         glm::mat4 projection;
         glm::mat4 viewProjection;
+        glm::vec2 uvOffset;
+        glm::vec2 uvScale;
     };
     class Entity {
     public:
