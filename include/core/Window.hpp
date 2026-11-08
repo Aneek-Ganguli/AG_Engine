@@ -16,6 +16,7 @@ namespace AG_EngineV2 {
         class Window {
         public:
             Window(int p_width, int p_height, const char* title);
+            Window()=default;
             void cleanUp();
             bool isWindowOpen(){return !glfwWindowShouldClose(window);};
             void pollEvents(){glfwPollEvents();};

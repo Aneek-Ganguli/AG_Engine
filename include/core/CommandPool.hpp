@@ -7,9 +7,8 @@ namespace AG_EngineV2::Core {
         CommandPool(){};
         CommandPool(vk::Device device, uint32_t queueFamilyIndex);
         void destroy(vk::Device device);
-        vk::CommandPool commandPool;
+        vk::CommandPool commandPool{};
         void resetCommandPool(vk::Device device);
-
 
     };
 }

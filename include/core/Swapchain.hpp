@@ -6,6 +6,7 @@ namespace AG_EngineV2::Core {
     static vk::PresentModeKHR presentMode;
     class Swapchain {
     public:
+        Swapchain()=default;
         Swapchain(vk::Device device,vk::SurfaceKHR surface, vk::PhysicalDevice physicalDevice,vk::SurfaceCapabilitiesKHR surfaceCapabilities, int NumOfFramesInFlight); //  if no frames in flight set 0
         vk::SwapchainKHR swapchain{};
         std::vector<vk::Image> swapchainImages{};
@@ -18,7 +19,7 @@ namespace AG_EngineV2::Core {
 
         std::vector<vk::Semaphore> acquireSemaphore{};
         std::vector<vk::Semaphore> releaseSemaphore{};
-        std::vector<vk::ImageView> imageViews;
+        std::vector<vk::ImageView> imageViews{};
         vk::ImageMemoryBarrier2 transitionToColourImageBarrier{};
         vk::ImageMemoryBarrier2 transitionToPresentImageBarrier{};
     };

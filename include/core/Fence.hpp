@@ -6,7 +6,7 @@ namespace  AG_EngineV2::Core {
     public:
         Fence(){};
         Fence(vk::Device device);
-        vk::Fence fence;
+        vk::Fence fence{};
         void waitAndResetFences(vk::Device device);
         void destroyFence(vk::Device device);
     };

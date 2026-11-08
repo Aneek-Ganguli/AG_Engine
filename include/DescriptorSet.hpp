@@ -10,7 +10,7 @@ namespace AG_EngineV2 {
         vk::DescriptorSetLayoutBinding layoutBinding{};
         vk::DescriptorSetLayoutCreateInfo layoutCreateInfo{};
 
-        vk::DescriptorSetLayout descriptorSetLayout;
+        vk::DescriptorSetLayout descriptorSetLayout{};
 
 
         void destroy(vk::Device device);

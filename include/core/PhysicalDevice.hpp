@@ -7,7 +7,7 @@ namespace AG_EngineV2 {
         public:
             PhysicalDevice(vk::Instance instance);
             PhysicalDevice(){};
-            vk::PhysicalDevice physicalDevice;
+            vk::PhysicalDevice physicalDevice{};
         };
     }
 }

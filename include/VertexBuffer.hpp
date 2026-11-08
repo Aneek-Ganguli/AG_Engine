@@ -16,8 +16,9 @@ namespace AG_EngineV2 {
     class VertexBuffer {
     public:
         VertexBuffer(vk::Device device, vk::PhysicalDevice physicalDevice, vk::CommandPool commandPool, Core::Queue* queue, std::vector<VertexData> vertices);
-        Buffer vertexBuffer;
-        Buffer stagingBuffer;
+        VertexBuffer() = default;
+        Buffer vertexBuffer{};
+        Buffer stagingBuffer{};
         std::array<vk::VertexInputAttributeDescription2EXT,3> attribDesc{};
         vk::VertexInputBindingDescription2EXT bindingDesc{};
         void destroy(vk::Device device);

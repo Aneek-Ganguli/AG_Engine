@@ -18,6 +18,7 @@ namespace AG_EngineV2 {
     public:
         Application* app;
         Entity(Application *app, std::vector<VertexData> vertex, std::vector<uint16_t> indices, uint32_t _index, bool texture, Texture _image, UniformBuffer indexUBO, UniformBuffer  ubo);
+        Entity() = default;
         VertexBuffer vertexBuffer;
         IndexBuffer indexBuffer;
         UniformBuffer uniformBuffer{};

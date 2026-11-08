@@ -24,8 +24,8 @@ namespace AG_EngineV2 {
 
         vk::DescriptorPoolCreateInfo poolInfo{};
 
-        vk::DescriptorPool descriptorPool;
-        std::vector<vk::DescriptorSet> allocatedSets;
-        vk::DescriptorSet descriptorSet;
+        vk::DescriptorPool descriptorPool{};
+        std::vector<vk::DescriptorSet> allocatedSets{};
+        vk::DescriptorSet descriptorSet{};
     };
 }

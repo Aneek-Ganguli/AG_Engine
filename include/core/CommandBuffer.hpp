@@ -8,7 +8,7 @@ namespace AG_EngineV2::Core {
         CommandBuffer(){};
         void begin();
         void end();
-        std::vector<vk::CommandBuffer> commandBuffer;
+        std::vector<vk::CommandBuffer> commandBuffer{};
         void beginRendering(vk::ImageView imageView, int width, int height, vk::ClearValue clearValue);
         void endRendering();
         void pipelineBarrier(int barrierCount,vk::ImageMemoryBarrier2 imageMemoryBarriers);
