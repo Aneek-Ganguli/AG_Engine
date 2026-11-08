@@ -7,6 +7,7 @@
 #include "GraphicsPipeline.hpp"
 #include "VertexBuffer.hpp"
 #include "IndexBuffer.hpp"
+#include "Shader.hpp"
 #include "core/CommandBuffer.hpp"
 #include "core/CommandPool.hpp"
 #include "core/Device.hpp"
@@ -44,9 +45,9 @@ namespace AG_EngineV2 {
         GraphicsPipeline graphicsPipeline{};
         vk::DescriptorSetLayout pushDescriptorSetLayout{};
         BindlessTextures bindlessTextures{};
-        vk::ShaderEXT vertexShader{};
-        vk::ShaderEXT textureFragmentShader{};
-        vk::ShaderEXT nonTextureFragmentShader{};
+        Shader vertexShader{};
+        Shader textureFragmentShader{};
+        Shader nonTextureFragmentShader{};
         vk::ShaderStageFlagBits shaderStages[2] = {vk::ShaderStageFlagBits::eVertex,vk::ShaderStageFlagBits::eFragment};
         vk::ClearValue clearValue;
         std::array<vk::ShaderEXT,2> textureShaders{};

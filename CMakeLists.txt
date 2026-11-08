@@ -14,8 +14,27 @@ set(GLM_BUILD_TESTS OFF CACHE INTERNAL "")
 
 find_package(Vulkan REQUIRED)
 
+
 add_subdirectory(lib/glfw EXCLUDE_FROM_ALL)
 add_subdirectory(lib/glm EXCLUDE_FROM_ALL)
+
+add_library(IMGUI STATIC
+    lib/imgui/imgui.cpp
+    lib/imgui/imgui_draw.cpp
+    lib/imgui/imgui_tables.cpp
+    lib/imgui/imgui_widgets.cpp
+    lib/imgui/backends/imgui_impl_glfw.cpp
+    lib/imgui/backends/imgui_impl_vulkan.cpp
+    lib/imgui/imgui_demo.cpp
+)
+
+include_directories(
+    lib/glfw/include
+    lib/glm
+    lib/imgui
+    lib/imgui/backends
+)
+target_link_libraries(IMGUI PRIVATE glfw Vulkan::Vulkan)
 
 add_library(VulkanProjectV2 STATIC
         src/core/Window.cpp
@@ -39,6 +58,7 @@ add_library(VulkanProjectV2 STATIC
         src/Application.cpp
         src/Entity.cpp
         src/BindlessTextures.cpp
+        src/Shader.cpp
 )
 
 target_include_directories(VulkanProjectV2
@@ -50,8 +70,6 @@ target_include_directories(VulkanProjectV2
         ${CMAKE_CURRENT_SOURCE_DIR}/lib
         PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/lib/glm/glm
-        PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/lib/glm/
 )
 
 target_link_libraries(VulkanProjectV2
@@ -59,6 +77,7 @@ target_link_libraries(VulkanProjectV2
         Vulkan::Vulkan
         glfw
         glm::glm
+        IMGUI
 )
 
 option(BUILD_TESTING "Build the test suite executable" OFF)
@@ -66,4 +85,10 @@ option(BUILD_TESTING "Build the test suite executable" OFF)
 if(BUILD_TESTING)
     add_executable(VulkanApp ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp)
     target_link_libraries(VulkanApp PRIVATE VulkanProjectV2)
+endif()
+
+option(BUILD_EDITOR "Build the editor executable" OFF)
+if(BUILD_EDITOR)
+    add_executable(VulkanEditor ${CMAKE_CURRENT_SOURCE_DIR}/src/editor/main.cpp)
+    target_link_libraries(VulkanEditor PRIVATE VulkanProjectV2)
 endif()

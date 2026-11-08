@@ -47,39 +47,45 @@ AG_EngineV2::Application::Application(std::string name, int width, int height)
 
 
     vk::ShaderCreateInfoEXT shaderCreateInfo{};
-    //vert
-    shaderCreateInfo.setCodeType(vk::ShaderCodeTypeEXT::eSpirv)
-                    .setCodeSize(shader_vert_spv_len)
-                    .setPCode( reinterpret_cast<const uint32_t*>(shader_vert_spv))
-                    .setPName("main")
-                    .setStage(vk::ShaderStageFlagBits::eVertex)
-                    .setSetLayouts(descriptorSetLayouts)
-                    .setSetLayoutCount(descriptorSetLayouts.size())
-                    .setNextStage(vk::ShaderStageFlagBits::eFragment);
+    // //vert
+    // shaderCreateInfo.setCodeType(vk::ShaderCodeTypeEXT::eSpirv)
+    //                 .setCodeSize(shader_vert_spv_len)
+    //                 .setPCode( reinterpret_cast<const uint32_t*>(shader_vert_spv))
+    //                 .setPName("main")
+    //                 .setStage(vk::ShaderStageFlagBits::eVertex)
+    //                 .setSetLayouts(descriptorSetLayouts)
+    //                 .setSetLayoutCount(descriptorSetLayouts.size())
+    //                 .setNextStage(vk::ShaderStageFlagBits::eFragment);
+    //
+    // vertexShader = device.device.createShaderEXT(shaderCreateInfo,nullptr,logger.dldi).value;
 
-    vertexShader = device.device.createShaderEXT(shaderCreateInfo,nullptr,logger.dldi).value;
+    vertexShader = Shader(device.device,shader_vert_spv,shader_vert_spv_len,descriptorSetLayouts,vk::ShaderStageFlagBits::eVertex,vk::ShaderStageFlagBits::eFragment,logger.dldi);
 
-    //frag
-    shaderCreateInfo.setNextStage({})
-                    .setCodeSize(shader_frag_spv_len)
-                    .setPCode(reinterpret_cast<const uint32_t*>(shader_frag_spv))
-                    .setStage(vk::ShaderStageFlagBits::eFragment)
-                    .setPName("main")
-                    .setNextStage({});
+    // //frag
+    // shaderCreateInfo.setNextStage({})
+    //                 .setCodeSize(shader_frag_spv_len)
+    //                 .setPCode(reinterpret_cast<const uint32_t*>(shader_frag_spv))
+    //                 .setStage(vk::ShaderStageFlagBits::eFragment)
+    //                 .setPName("main")
+    //                 .setNextStage({});
 
-    textureFragmentShader = device.device.createShaderEXT(shaderCreateInfo,nullptr,logger.dldi).value;
+    // textureFragmentShader = device.device.createShaderEXT(shaderCreateInfo,nullptr,logger.dldi).value;
 
-    shaderCreateInfo.setCodeSize(nonTexture_shader_frag_spv_len)
-                    .setPCode(reinterpret_cast<const uint32_t*>(nonTexture_shader_frag_spv))
-                    .setStage(vk::ShaderStageFlagBits::eFragment)
-                    .setPName("main");
-                    // .setNextStage({})
-                    // .setSetLayouts(descriptorSetLayout)
-                    // .setSetLayoutCount(1);
-    nonTextureFragmentShader = device.device.createShaderEXT(shaderCreateInfo,nullptr,logger.dldi).value;
+    textureFragmentShader = Shader(device.device,shader_frag_spv,shader_frag_spv_len,descriptorSetLayouts,vk::ShaderStageFlagBits::eFragment,{},logger.dldi);
 
-    textureShaders = { vertexShader, textureFragmentShader };
-    nonTextureShaders = { vertexShader, nonTextureFragmentShader};
+    // shaderCreateInfo.setCodeSize(nonTexture_shader_frag_spv_len)
+    //                 .setPCode(reinterpret_cast<const uint32_t*>(nonTexture_shader_frag_spv))
+    //                 .setStage(vk::ShaderStageFlagBits::eFragment)
+    //                 .setPName("main");
+    //                 // .setNextStage({})
+    //                 // .setSetLayouts(descriptorSetLayout)
+    //                 // .setSetLayoutCount(1);
+    // nonTextureFragmentShader = device.device.createShaderEXT(shaderCreateInfo,nullptr,logger.dldi).value;
+
+    nonTextureFragmentShader = Shader(device.device,nonTexture_shader_frag_spv,nonTexture_shader_frag_spv_len,descriptorSetLayouts,vk::ShaderStageFlagBits::eFragment,{},logger.dldi);
+
+    textureShaders = { vertexShader.shader, textureFragmentShader.shader };
+    nonTextureShaders = { vertexShader.shader, nonTextureFragmentShader.shader};
 
     vk::PipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
     pipelineLayoutCreateInfo.setSetLayoutCount(descriptorSetLayouts.size())
@@ -100,9 +106,12 @@ void Application::destroy() {
     bindlessTextures.destroy(device.device);
     device.device.destroyDescriptorSetLayout(pushDescriptorSetLayout);
     device.device.destroyPipelineLayout(pipelineLayout);
-    device.device.destroyShaderEXT(nonTextureFragmentShader, nullptr,logger.dldi);
-    device.device.destroyShaderEXT(vertexShader,nullptr,logger.dldi);
-    device.device.destroyShaderEXT(textureFragmentShader,nullptr,logger.dldi);
+    // device.device.destroyShaderEXT(nonTextureFragmentShader, nullptr,logger.dldi);
+    // device.device.destroyShaderEXT(vertexShader,nullptr,logger.dldi);
+    // device.device.destroyShaderEXT(textureFragmentShader,nullptr,logger.dldi);
+    vertexShader.destroy(device.device);
+    textureFragmentShader.destroy(device.device);
+    nonTextureFragmentShader.destroy(device.device);
     for (int i = 0; i < NumFramesInFlight; i++) {
         fence[i].destroyFence(device.device);
         commandPool[i].destroy(device.device);
