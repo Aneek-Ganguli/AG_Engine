@@ -70,6 +70,8 @@ target_include_directories(VulkanProjectV2
         ${CMAKE_CURRENT_SOURCE_DIR}/lib
         PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/lib/glm/glm
+        PUBLIC
+        "C:/Program Files/Assimp/include"
 )
 
 target_link_libraries(VulkanProjectV2
@@ -78,7 +80,9 @@ target_link_libraries(VulkanProjectV2
         glfw
         glm::glm
         IMGUI
+        "C:/Program Files/Assimp/lib/x64/assimp-vc143-mt.lib"
 )
+
 
 option(BUILD_TESTING "Build the test suite executable" OFF)
 

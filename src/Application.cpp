@@ -183,3 +183,40 @@ void Application::endFrame() {
     currentFrame = (currentFrame + 1) % NumFramesInFlight;
 }
 
+void generateNormals(std::vector<VertexData>& vertices, const std::vector<uint16_t>& indices) {
+    // Reset all normals to zero
+    for (auto& v : vertices) {
+        v.normal = glm::vec3(0.0f);
+    }
+
+    // Accumulate face normals for each triangle
+    for (size_t i = 0; i < indices.size(); i += 3) {
+        uint16_t idx0 = indices[i];
+        uint16_t idx1 = indices[i + 1];
+        uint16_t idx2 = indices[i + 2];
+
+        glm::vec3 p0 = vertices[idx0].vertices;
+        glm::vec3 p1 = vertices[idx1].vertices;
+        glm::vec3 p2 = vertices[idx2].vertices;
+
+        // Cross product of two triangle edges
+        glm::vec3 edge1 = p1 - p0;
+        glm::vec3 edge2 = p2 - p0;
+        glm::vec3 faceNormal = glm::cross(edge1, edge2);
+
+        // Accumulate (area-weighted)
+        vertices[idx0].normal += faceNormal;
+        vertices[idx1].normal += faceNormal;
+        vertices[idx2].normal += faceNormal;
+    }
+
+    // Normalize the accumulated vectors
+    for (auto& v : vertices) {
+        float len = glm::length(v.normal);
+        if (len > 0.0f) {
+            v.normal = glm::normalize(v.normal);
+        } else {
+            v.normal = glm::vec3(0.0f, 0.0f, 1.0f); // Fallback
+        }
+    }
+}
