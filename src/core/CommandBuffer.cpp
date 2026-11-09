@@ -26,7 +26,7 @@ void CommandBuffer::begin() {
     }
 }
 
-void CommandBuffer::beginRendering(vk::ImageView imageView, int width, int height, vk::ClearValue clearValue) {
+void CommandBuffer::beginRendering(vk::ImageView imageView, int width, int height, vk::ClearValue clearValue,  vk::RenderingAttachmentInfo depthAttachment) {
     vk::RenderingAttachmentInfo  colorAttachmentInfo{};
     colorAttachmentInfo.imageLayout = vk::ImageLayout::eColorAttachmentOptimal;
     colorAttachmentInfo.imageView = imageView;
@@ -42,6 +42,7 @@ void CommandBuffer::beginRendering(vk::ImageView imageView, int width, int heigh
     renderingInfo.layerCount = 1;
     renderingInfo.colorAttachmentCount =1;
     renderingInfo.pColorAttachments = &colorAttachmentInfo;
+    renderingInfo.pDepthAttachment = &depthAttachment;
 
     commandBuffer.data()->beginRendering(&renderingInfo);
 }

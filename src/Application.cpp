@@ -135,7 +135,7 @@ void Application::startFrame() {
     swapchain.transitionImageLayoutToColour(commandBuffer[currentFrame].commandBuffer[0], imageIndex);
     commandBuffer[currentFrame].pipelineBarrier(1, swapchain.transitionToColourImageBarrier);
 
-    commandBuffer[currentFrame].beginRendering(swapchain.imageViews[imageIndex], window.width, window.height, clearValue);
+    commandBuffer[currentFrame].beginRendering(swapchain.imageViews[imageIndex], window.width, window.height, clearValue, depthBuffer.depthAttachmentInfo);
 
 
 

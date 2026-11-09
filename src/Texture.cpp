@@ -2,28 +2,27 @@
 #include "core/Queue.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "Buffer.hpp"
 #include "../lib/stb/stb_image.h"
+#include "Buffer.hpp"
 #include "core/CommandBuffer.hpp"
 #include "core/CommandPool.hpp"
 
 using namespace AG_EngineV2;
 using namespace AG_EngineV2::Core;
 
-uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties,vk::PhysicalDevice* physicalDevice) {
+static uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties, vk::PhysicalDevice physicalDevice) {
     vk::PhysicalDeviceMemoryProperties memProperties;
-    physicalDevice->getMemoryProperties(&memProperties);
+    physicalDevice.getMemoryProperties(&memProperties);
     for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
         if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
             return i;
         }
     }
-
     throw std::runtime_error("failed to find suitable memory type!");
 }
 
-Texture::Texture(vk::Device device,Queue* queue, vk::PhysicalDevice physicalDevice,std::string texturePath, bool flipVertical) {
-    createImageTexture(device,queue, physicalDevice, texturePath, flipVertical);
+Texture::Texture(vk::Device device, Core::Queue* queue, vk::PhysicalDevice physicalDevice, std::string texturePath, bool flipVertical) {
+    createImageTexture(device, queue, physicalDevice, texturePath, flipVertical);
 
     vk::ImageViewCreateInfo viewInfo{};
     viewInfo.image = textureImage;
@@ -40,8 +39,8 @@ Texture::Texture(vk::Device device,Queue* queue, vk::PhysicalDevice physicalDevi
     }
 
     vk::SamplerCreateInfo samplerInfo{};
-    samplerInfo.magFilter = vk::Filter::eNearest;
-    samplerInfo.minFilter = vk::Filter::eNearest;
+    samplerInfo.magFilter = vk::Filter::eLinear;
+    samplerInfo.minFilter = vk::Filter::eLinear;
     samplerInfo.addressModeU = vk::SamplerAddressMode::eRepeat;
     samplerInfo.addressModeV = vk::SamplerAddressMode::eRepeat;
     samplerInfo.addressModeW = vk::SamplerAddressMode::eRepeat;
@@ -59,23 +58,20 @@ Texture::Texture(vk::Device device,Queue* queue, vk::PhysicalDevice physicalDevi
         throw std::runtime_error("failed to create texture sampler!");
     }
 
-
     imageInfo.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
     imageInfo.imageView = view;
     imageInfo.sampler = sampler;
 
-
-    textureWrite.dstBinding = 1; // Binding index inside Set 1
+    textureWrite.dstBinding = 1;
     textureWrite.dstArrayElement = 0;
     textureWrite.descriptorType = vk::DescriptorType::eCombinedImageSampler;
     textureWrite.descriptorCount = 1;
     textureWrite.pImageInfo = &imageInfo;
-
 }
 
 void Texture::transitionImageLayout(vk::Device device, Core::Queue* queue, vk::Image image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout, uint32_t mipLevels) {
-    CommandPool copyCommandPool(device, queue->graphicsQueueFamilyIndex);
-    CommandBuffer copyCommandBuffer(device, copyCommandPool.commandPool);
+    Core::CommandPool copyCommandPool(device, queue->graphicsQueueFamilyIndex);
+    Core::CommandBuffer copyCommandBuffer(device, copyCommandPool.commandPool);
 
     copyCommandBuffer.begin();
 
@@ -85,10 +81,9 @@ void Texture::transitionImageLayout(vk::Device device, Core::Queue* queue, vk::I
     barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     barrier.image = image;
-
     barrier.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
     barrier.subresourceRange.baseMipLevel = 0;
-    barrier.subresourceRange.levelCount = mipLevels; // FIXED: Cover all mip levels!
+    barrier.subresourceRange.levelCount = mipLevels;
     barrier.subresourceRange.baseArrayLayer = 0;
     barrier.subresourceRange.layerCount = 1;
 
@@ -98,17 +93,15 @@ void Texture::transitionImageLayout(vk::Device device, Core::Queue* queue, vk::I
     if (oldLayout == vk::ImageLayout::eUndefined && newLayout == vk::ImageLayout::eTransferDstOptimal) {
         barrier.srcAccessMask = {};
         barrier.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
-
         sourceStage = vk::PipelineStageFlagBits::eTopOfPipe;
         destinationStage = vk::PipelineStageFlagBits::eTransfer;
     } else if (oldLayout == vk::ImageLayout::eTransferDstOptimal && newLayout == vk::ImageLayout::eShaderReadOnlyOptimal) {
         barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
         barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
-
         sourceStage = vk::PipelineStageFlagBits::eTransfer;
         destinationStage = vk::PipelineStageFlagBits::eFragmentShader;
     } else {
-        throw std::invalid_argument("unsupported layout transition!");
+        throw std::invalid_argument("unsupported texture layout transition!");
     }
 
     copyCommandBuffer.commandBuffer[0].pipelineBarrier(
@@ -125,7 +118,7 @@ void Texture::transitionImageLayout(vk::Device device, Core::Queue* queue, vk::I
     submitInfo.pCommandBuffers = &copyCommandBuffer.commandBuffer[0];
 
     if (queue->graphicsQueue.submit(1, &submitInfo, nullptr) != vk::Result::eSuccess) {
-        throw std::runtime_error("failed to submit layout transition command buffer!");
+        throw std::runtime_error("failed to submit texture layout transition command buffer!");
     }
     queue->graphicsQueue.waitIdle();
 
@@ -134,8 +127,8 @@ void Texture::transitionImageLayout(vk::Device device, Core::Queue* queue, vk::I
     device.destroyCommandPool(copyCommandPool.commandPool);
 }
 
-void Texture::createImageTexture(vk::Device device,Queue* queue,vk::PhysicalDevice physicalDevice,const std::string& texturePath, bool flipVertical) {
-stbi_set_flip_vertically_on_load(flipVertical);
+void Texture::createImageTexture(vk::Device device, Core::Queue* queue, vk::PhysicalDevice physicalDevice, const std::string& texturePath, bool flipVertical) {
+    stbi_set_flip_vertically_on_load(flipVertical);
     int texWidth, texHeight, texChannels;
     stbi_uc* pixels = stbi_load(texturePath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
     VkDeviceSize imageSize = static_cast<VkDeviceSize>(texWidth) * texHeight * 4;
@@ -145,7 +138,6 @@ stbi_set_flip_vertically_on_load(flipVertical);
     }
     mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
 
-    // 1. Create the Image first
     vk::ImageCreateInfo imageInfo{};
     imageInfo.imageType = vk::ImageType::e2D;
     imageInfo.extent.width = static_cast<uint32_t>(texWidth);
@@ -159,25 +151,21 @@ stbi_set_flip_vertically_on_load(flipVertical);
     imageInfo.usage = vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled;
     imageInfo.sharingMode = vk::SharingMode::eExclusive;
     imageInfo.samples = vk::SampleCountFlagBits::e1;
-    imageInfo.flags = {};
 
     if (device.createImage(&imageInfo, nullptr, &textureImage) != vk::Result::eSuccess) {
         throw std::runtime_error("failed to create image!");
     }
 
-    // 2. Allocate and bind dedicated device memory for the image
     vk::MemoryRequirements memRequirements = device.getImageMemoryRequirements(textureImage);
     vk::MemoryAllocateInfo allocInfo{};
     allocInfo.allocationSize = memRequirements.size;
-    allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal, &physicalDevice);
+    allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal, physicalDevice);
 
-     // Store this in your class member if you need to free it later
     if (device.allocateMemory(&allocInfo, nullptr, &textureImageMemory) != vk::Result::eSuccess) {
         throw std::runtime_error("failed to allocate image memory!");
     }
     device.bindImageMemory(textureImage, textureImageMemory, 0);
 
-    // 3. Create Staging Buffer and copy pixel data
     stagingBuffer = Buffer(
         device,
         physicalDevice,
@@ -193,41 +181,34 @@ stbi_set_flip_vertically_on_load(flipVertical);
     memcpy(mem, pixels, static_cast<size_t>(imageSize));
     device.unmapMemory(stagingBuffer.memory);
 
-    transitionImageLayout(device,queue,textureImage, vk::Format::eR8G8B8A8Srgb, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal,mipLevels);
-
+    transitionImageLayout(device, queue, textureImage, vk::Format::eR8G8B8A8Srgb, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, mipLevels);
 
     vk::BufferImageCopy region{};
     region.bufferOffset = 0;
     region.bufferRowLength = 0;
     region.bufferImageHeight = 0;
-
     region.imageSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
     region.imageSubresource.mipLevel = 0;
     region.imageSubresource.baseArrayLayer = 0;
     region.imageSubresource.layerCount = 1;
-
     region.imageOffset = vk::Offset3D{0, 0, 0};
     region.imageExtent = vk::Extent3D{static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight), 1};
 
-    CommandPool copyCommandPool(device,queue->graphicsQueueFamilyIndex);
-    CommandBuffer copyCommandBuffer(device,copyCommandPool.commandPool);
+    CommandPool copyCommandPool(device, queue->graphicsQueueFamilyIndex);
+    CommandBuffer copyCommandBuffer(device, copyCommandPool.commandPool);
     copyCommandBuffer.begin();
     copyCommandBuffer.commandBuffer[0].copyBufferToImage(
-            stagingBuffer.buffer,
-            textureImage,
-            vk::ImageLayout::eTransferDstOptimal,
-            1,
-            &region
+        stagingBuffer.buffer,
+        textureImage,
+        vk::ImageLayout::eTransferDstOptimal,
+        1,
+        &region
     );
 
-
     vk::FormatProperties formatProperties = physicalDevice.getFormatProperties(vk::Format::eR8G8B8A8Srgb);
-
     if (!(formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eSampledImageFilterLinear)) {
         throw std::runtime_error("texture image format does not support linear blitting!");
     }
-
-    // copyCommandBuffer.begin();
 
     vk::ImageMemoryBarrier barrier;
     barrier.image = textureImage;
@@ -276,13 +257,6 @@ stbi_set_flip_vertically_on_load(flipVertical);
         blit.dstSubresource.baseArrayLayer = 0;
         blit.dstSubresource.layerCount = 1;
 
-        // commandBuffer.blitImage(
-        //     image, vk::ImageLayout::eTransferSrcOptimal,
-        //     image, vk::ImageLayout::eTransferDstOptimal,
-        //     blit,
-        //     vk::Filter::eLinear
-        // );
-
         copyCommandBuffer.commandBuffer[0].blitImage(
             textureImage, vk::ImageLayout::eTransferSrcOptimal,
             textureImage, vk::ImageLayout::eTransferDstOptimal,
@@ -309,7 +283,6 @@ stbi_set_flip_vertically_on_load(flipVertical);
         if (mipHeight > 1) mipHeight /= 2;
     }
 
-// Extra transition for the last mip level since it isn't handled inside the loop loop's blit pass
     barrier.subresourceRange.baseMipLevel = mipLevels - 1;
     barrier.oldLayout = vk::ImageLayout::eTransferDstOptimal;
     barrier.newLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
@@ -325,7 +298,6 @@ stbi_set_flip_vertically_on_load(flipVertical);
         barrier
     );
 
-    // TransitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     stbi_image_free(pixels);
 
     copyCommandBuffer.end();
@@ -353,11 +325,10 @@ void Texture::destroy(vk::Device device) {
 }
 
 void Texture::update(int index, vk::DescriptorSet bindlessTextureDescriptorSet, vk::Device device) {
-
     vk::WriteDescriptorSet write{};
     write.dstSet = bindlessTextureDescriptorSet;
     write.dstBinding = 1;
-    write.dstArrayElement = index; // The unique slot assigned to this texture
+    write.dstArrayElement = index;
     write.descriptorType = vk::DescriptorType::eCombinedImageSampler;
     write.descriptorCount = 1;
     write.pImageInfo = &imageInfo;

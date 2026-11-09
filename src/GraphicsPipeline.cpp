@@ -15,24 +15,24 @@ void GraphicsPipeline::createDefaultPipeline(vk::CommandBuffer commandBuffer, vk
     commandBuffer.setSampleMaskEXT(vk::SampleCountFlagBits::e1,sampleMask,dldi);
     commandBuffer.setAlphaToCoverageEnableEXT(false,dldi);
     commandBuffer.setPolygonModeEXT(vk::PolygonMode::eFill,dldi);
-    commandBuffer.setCullModeEXT(vk::CullModeFlagBits::eNone,dldi);
+    commandBuffer.setCullModeEXT(vk::CullModeFlagBits::eFront,dldi);
     commandBuffer.setFrontFaceEXT(vk::FrontFace::eCounterClockwise,dldi);
     commandBuffer.setDepthTestEnable(true);
     commandBuffer.setDepthWriteEnable(true);
-    commandBuffer.setDepthBiasEnable(true);
-    commandBuffer.setDepthBias( 0.0f, 0.0f, 0.0f);
+    commandBuffer.setDepthBiasEnable(false);
+    // commandBuffer.setDepthBias( 0.0f, 0.0f, 0.0f);
     commandBuffer.setDepthCompareOp(vk::CompareOp::eLess);
-    commandBuffer.setStencilTestEnable(true);
-    commandBuffer.setStencilCompareMask( vk::StencilFaceFlagBits::eFrontAndBack, 0xFF);
-    commandBuffer.setStencilWriteMask( vk::StencilFaceFlagBits::eFrontAndBack, 0xFF);
-    commandBuffer.setStencilReference( vk::StencilFaceFlagBits::eFrontAndBack, 0);
-    commandBuffer.setStencilOpEXT(vk::StencilFaceFlagBits::eFrontAndBack,
-        vk::StencilOp::eKeep, // failOp
-        vk::StencilOp::eKeep, // passOp
-        vk::StencilOp::eKeep, // depthFailOp
-        vk::CompareOp::eAlways,
-        dldi
-    );
+    commandBuffer.setStencilTestEnable(false);
+    // commandBuffer.setStencilCompareMask( vk::StencilFaceFlagBits::eFrontAndBack, 0xFF);
+    // commandBuffer.setStencilWriteMask( vk::StencilFaceFlagBits::eFrontAndBack, 0xFF);
+    // commandBuffer.setStencilReference( vk::StencilFaceFlagBits::eFrontAndBack, 0);
+    // commandBuffer.setStencilOpEXT(vk::StencilFaceFlagBits::eFrontAndBack,
+        // vk::StencilOp::eKeep, // failOp
+        // vk::StencilOp::eKeep, // passOp
+        // vk::StencilOp::eKeep, // depthFailOp
+        // vk::CompareOp::eAlways,
+        // dldi
+    // );
     commandBuffer.setColorBlendEnableEXT(0,vk::False,dldi);
     commandBuffer.setColorWriteMaskEXT(0,vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA,dldi);
 }
