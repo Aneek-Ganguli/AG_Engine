@@ -14,7 +14,7 @@ namespace AG_EngineV2 {
         glm::vec3 normal;
     };
     void generateNormals(std::vector<VertexData>& vertices, const std::vector<uint16_t>& indices) ;
-    std::vector<VertexData> load_model(const std::string& path, std::vector<uint16_t>& indices);
+    std::vector<VertexData> loadModel(const std::string& path, std::vector<uint16_t>& indices);
     class VertexBuffer {
     public:
         VertexBuffer(vk::Device device, vk::PhysicalDevice physicalDevice, vk::CommandPool commandPool, Core::Queue* queue, std::vector<VertexData> vertices);

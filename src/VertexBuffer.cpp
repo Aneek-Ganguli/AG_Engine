@@ -129,7 +129,7 @@ void AG_EngineV2::generateNormals(std::vector<VertexData>& vertices, const std::
     }
 }
 
-std::vector<VertexData> AG_EngineV2::load_model(const std::string& path, std::vector<uint16_t>& indices) {
+std::vector<VertexData> AG_EngineV2::loadModel(const std::string& path, std::vector<uint16_t>& indices) {
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
 

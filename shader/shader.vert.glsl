@@ -14,19 +14,16 @@ layout(binding = 0, std140) uniform UniformBufferObject {
     mat4 proj;
     vec2 uvOffset;
     vec2 uvScale;
+    float ambient = 0.2f;
 } ubo;
 
-layout(binding = 3) uniform ShaderUniform{
-    uint idk;
-} shading;
 
 const vec3 directionalLightDirection = normalize(vec3(1.0f, -3.0f, -1.0f));
-
 
 void main() {
     mat4 transform = ubo.proj * ubo.view * ubo.model;
     gl_Position =  transform * vec4(inPosition, 1.0);
-    float lightIntensity = max(dot(normal, directionalLightDirection), 0.0f);
+    float lightIntensity = ambient + max(dot(normal, directionalLightDirection), 0.0f);
     fragColor = color * lightIntensity;
 //    fragColor = color;
     fragTexCoord = (uv - ubo.uvOffset) * ubo.uvScale;

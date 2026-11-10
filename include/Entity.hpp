@@ -13,6 +13,7 @@ namespace AG_EngineV2 {
         glm::mat4 model;
         glm::vec2 uvOffset;
         glm::vec2 uvScale;
+        float ambient = 0.02;
     };
     class Entity {
     public:
