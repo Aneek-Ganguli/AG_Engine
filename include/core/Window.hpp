@@ -15,7 +15,7 @@ namespace AG_EngineV2 {
     namespace Core{
         class Window {
         public:
-            Window(int p_width, int p_height, const char* title);
+            Window(int p_width, int p_height, const char* title,bool fullscreen);
             Window()=default;
             void cleanUp();
             bool isWindowOpen(){return !glfwWindowShouldClose(window);};
@@ -35,7 +35,7 @@ namespace AG_EngineV2 {
 
             void createInstance();
 
-            void createGLFWwindow(int width, int height, const char* title);
+            void createGLFWwindow(int width, int height, const char* title, bool fullscreen);
 
 
         };

@@ -7,8 +7,8 @@
 using namespace AG_EngineV2;
 using namespace AG_EngineV2::Core;
 
-AG_EngineV2::Application::Application(std::string name, int width, int height)
-    :window(width, height, name.c_str()),
+AG_EngineV2::Application::Application(std::string name, int width, int height, bool fullscreen)
+    :window(width, height, name.c_str(),fullscreen),
      logger(window.getInstance()),
      physicalDevice(window.getInstance()),
      device(),

@@ -23,7 +23,7 @@ const uint8_t constexpr NumFramesInFlight = 3;
 namespace AG_EngineV2 {
     class Application {
     public:
-        Application(std::string name, int width, int height);
+        Application(std::string name, int width, int height, bool fullscreen);
         void destroy();
         void startFrame();
         void bindPipeline(bool textures);

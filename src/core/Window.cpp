@@ -109,13 +109,28 @@ void Window::createInstance() {
     }
 }
 
-void Window::createGLFWwindow(int width, int height, const char* title) {
+void Window::createGLFWwindow(int width, int height, const char* title, bool fullscreen) {
     if (!glfwInit()) {
         std::cerr << "Failed to initialize GLFW!" << std::endl;
     }
+    GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+    const GLFWvidmode* mode = glfwGetVideoMode(monitor);
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    window = glfwCreateWindow(width, height, title, NULL, NULL);
+    glfwWindowHint(GLFW_RED_BITS, mode->redBits);
+    glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
+    glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
+    glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
+
+    if (fullscreen) {
+        glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
+        // glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+        window = glfwCreateWindow(mode->width, mode->height, title, NULL, NULL);
+        width = mode->width;
+        height = mode->height;
+        glfwSetWindowPos(window, 0, 0);
+    }
+    else window = glfwCreateWindow(width, height, title, NULL, NULL);
 
     if (!window) {
         std::cerr << "Failed to create GLFW window!" << std::endl;
@@ -123,11 +138,11 @@ void Window::createGLFWwindow(int width, int height, const char* title) {
 }
 
 
-Window::Window(int p_width, int p_height, const char* title)  {
+Window::Window(int p_width, int p_height, const char* title, bool fullscreen)  {
 
     width = p_width;
     height = p_height;
-    createGLFWwindow(p_width,p_height,title);
+    createGLFWwindow(p_width,p_height,title, fullscreen);
 
     extensionInitialization();
     layerInitialization();
@@ -136,6 +151,7 @@ Window::Window(int p_width, int p_height, const char* title)  {
 
     // logger = Logger(instance);
 
+}
 }
 
 void Window::cleanUp() {
