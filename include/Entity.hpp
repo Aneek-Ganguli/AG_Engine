@@ -13,7 +13,9 @@ namespace AG_EngineV2 {
         glm::mat4 model;
         glm::vec2 uvOffset;
         glm::vec2 uvScale;
-        float ambient = 0.02;
+        glm::vec4 ambientLightColor{1.0f,1.0f,1.0f,.3f};
+        glm::vec3 lightPosition{-1.f};
+        glm::vec4 lightColor{1.f};
     };
     class Entity {
     public:

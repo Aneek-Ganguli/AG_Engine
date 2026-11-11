@@ -149,6 +149,7 @@ std::vector<VertexData> AG_EngineV2::loadModel(const std::string& path, std::vec
             vertex.vertices = { mesh->mVertices[j].x, mesh->mVertices[j].y, mesh->mVertices[j].z };
             vertex.texCoord = mesh->mTextureCoords[0] ? glm::vec2{ mesh->mTextureCoords[0][j].x, mesh->mTextureCoords[0][j].y } : glm::vec2{ 0.0f, 0.0f };
             vertex.color = { 1.0f, 1.0f, 1.0f}; // Default white color
+            vertex.normal = mesh->HasNormals() ? glm::vec3{ mesh->mNormals[j].x, mesh->mNormals[j].y, mesh->mNormals[j].z } : glm::vec3{ 0.0f, 0.0f, 1.0f }; // Default normal if not present
             vertices.push_back(vertex);
         }
 
@@ -161,7 +162,7 @@ std::vector<VertexData> AG_EngineV2::loadModel(const std::string& path, std::vec
         }
     }
 
-    generateNormals(vertices, indices);
+    // generateNormals(vertices, indices);
 
     return vertices;
 }
