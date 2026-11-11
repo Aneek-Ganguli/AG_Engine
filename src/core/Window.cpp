@@ -152,7 +152,7 @@ Window::Window(int p_width, int p_height, const char* title, bool fullscreen)  {
     // logger = Logger(instance);
 
 }
-}
+
 
 void Window::cleanUp() {
     // logger.cleanUp(instance);
