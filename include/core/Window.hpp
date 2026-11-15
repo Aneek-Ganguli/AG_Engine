@@ -35,7 +35,7 @@ namespace AG_EngineV2 {
 
             void createInstance();
 
-            void createGLFWwindow(int width, int height, const char* title, bool fullscreen);
+            void createGLFWwindow(int width, int _height, const char* title, bool fullscreen);
 
 
         };

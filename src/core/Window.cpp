@@ -109,7 +109,7 @@ void Window::createInstance() {
     }
 }
 
-void Window::createGLFWwindow(int width, int height, const char* title, bool fullscreen) {
+void Window::createGLFWwindow(int _width, int _height, const char* title, bool fullscreen) {
     if (!glfwInit()) {
         std::cerr << "Failed to initialize GLFW!" << std::endl;
     }
@@ -130,7 +130,9 @@ void Window::createGLFWwindow(int width, int height, const char* title, bool ful
         height = mode->height;
         glfwSetWindowPos(window, 0, 0);
     }
-    else window = glfwCreateWindow(width, height, title, NULL, NULL);
+    else if (!fullscreen) {
+        window = glfwCreateWindow(width, _height, title, NULL, NULL);
+    }
 
     if (!window) {
         std::cerr << "Failed to create GLFW window!" << std::endl;
