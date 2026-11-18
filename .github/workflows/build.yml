@@ -22,6 +22,7 @@ jobs:
           git clone --depth 1 https://github.com/glfw/glfw.git lib/glfw
           git clone --depth 1 https://github.com/g-truc/glm.git lib/glm
           curl -sSL https://raw.githubusercontent.com/nothings/stb/master/stb_image.h -o lib/stb/stb_image.h
+          git clone --depth 1 https://github.com/ocornut/imgui.git lib/imgui
       # 3. Install Vulkan SDK 1.3
       - name: Install Vulkan SDK
         uses: jakoch/install-vulkan-sdk-action@v1
