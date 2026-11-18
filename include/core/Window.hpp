@@ -5,11 +5,7 @@
 #include "Logger.hpp"
 #include "PhysicalDevice.hpp"
 
-#ifndef NO_DEBUG
-#define debug true
-#else
-#define debug false
-#endif
+extern bool debug;
 
 namespace AG_EngineV2 {
     namespace Core{

@@ -3,6 +3,8 @@
 #include "core/Logger.hpp"
 using namespace AG_EngineV2::Core;
 
+extern bool debug;
+
 VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
         VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
         VkDebugUtilsMessageTypeFlagsEXT messageType,
@@ -17,7 +19,9 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
 Logger::Logger(vk::Instance instance) {
     dldi = vk::detail::DispatchLoaderDynamic(instance,vkGetInstanceProcAddr);
 
-    debugMessenger = createMessenger(instance);
+    if (debug) {
+        debugMessenger = createMessenger(instance);
+    }
 }
 
 vk::DebugUtilsMessengerEXT Logger::createMessenger(vk::Instance instance) {
@@ -38,6 +42,8 @@ vk::DebugUtilsMessengerEXT Logger::createMessenger(vk::Instance instance) {
 
 void Logger::cleanUp(vk::Instance instance) {
     // vkDestroyDebugUtilsMessengerEXT(instance,debugMessenger,nullptr);
-    instance.destroyDebugUtilsMessengerEXT(debugMessenger,nullptr,dldi);
+    if (debug) {
+        instance.destroyDebugUtilsMessengerEXT(debugMessenger,nullptr,dldi);
+    }
 }
 
