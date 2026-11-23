@@ -16,7 +16,7 @@ void GraphicsPipeline::createDefaultPipeline(vk::CommandBuffer commandBuffer, vk
     commandBuffer.setAlphaToCoverageEnableEXT(false,dldi);
     commandBuffer.setPolygonModeEXT(vk::PolygonMode::eFill,dldi);
     commandBuffer.setCullModeEXT(vk::CullModeFlagBits::eFront,dldi);
-    commandBuffer.setFrontFaceEXT(vk::FrontFace::eCounterClockwise,dldi);
+    commandBuffer.setFrontFaceEXT(vk::FrontFace::eClockwise,dldi);
     commandBuffer.setDepthTestEnable(true);
     commandBuffer.setDepthWriteEnable(true);
     commandBuffer.setDepthBiasEnable(false);
